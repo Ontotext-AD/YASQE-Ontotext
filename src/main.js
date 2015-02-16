@@ -346,6 +346,7 @@ root.autoComplete = function(yasqe) {
 root.registerAutocompleter("prefixes", require("./autocompleters/prefixes.js"));
 root.registerAutocompleter("properties", require("./autocompleters/properties.js"));
 root.registerAutocompleter("classes", require("./autocompleters/classes.js"));
+root.registerAutocompleter("standard", require("./autocompleters/standard.js"));
 root.registerAutocompleter("variables", require("./autocompleters/variables.js"));
 
 
