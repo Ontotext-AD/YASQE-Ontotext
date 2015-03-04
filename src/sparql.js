@@ -40,6 +40,13 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 		}
 	}
 	ajaxConfig.data = yasqe.getUrlArguments(config);
+	if (config.setQueryLimit && (typeof config.setQueryLimit == "function")) {
+		ajaxConfig.data.forEach(function(o) {
+			if (o.name == "query") {
+				o.value = config.setQueryLimit(o.value);
+			}
+		});
+	}
 	if (!handlerDefined && !callback)
 		return; // ok, we can query, but have no callbacks. just stop now
 	
