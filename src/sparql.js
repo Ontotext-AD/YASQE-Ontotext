@@ -39,7 +39,23 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 			}
 		}
 	}
+
+	/**
+	 * merge additional request headers
+	 */
+	if (config.headers && !$.isEmptyObject(config.headers))
+		$.extend(ajaxConfig.headers, config.headers);
+
+	
 	ajaxConfig.data = yasqe.getUrlArguments(config);
+	var countAjaxConfig = {};
+	$.extend(true, countAjaxConfig, ajaxConfig);
+	if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
+		countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
+		countAjaxConfig.complete = config.callbacks.countCallback;
+	}
+
+	
 	if (config.setQueryLimit && (typeof config.setQueryLimit == "function")) {
 		ajaxConfig.data.forEach(function(o) {
 			if (o.name == "query") {
@@ -47,6 +63,7 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 			}
 		});
 	}
+
 	if (!handlerDefined && !callback)
 		return; // ok, we can query, but have no callbacks. just stop now
 	
@@ -54,14 +71,6 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	if (callback)
 		ajaxConfig.complete = callback;
 
-	
-
-	/**
-	 * merge additional request headers
-	 */
-	if (config.headers && !$.isEmptyObject(config.headers))
-		$.extend(ajaxConfig.headers, config.headers);
-	
 	YASQE.updateQueryButton(yasqe, "busy");
 	
 	var updateQueryButton = function() {
@@ -73,7 +82,13 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	} else {
 		ajaxConfig.complete = updateQueryButton;
 	}
+
+	if (config.callbacks.resetResults && (typeof config.callbacks.resetResults == "function")) {
+		config.callbacks.resetResults();
+	}
+
 	yasqe.xhr = $.ajax(ajaxConfig);
+	$.ajax(countAjaxConfig);
 };
 
 

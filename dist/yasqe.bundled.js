@@ -5267,20 +5267,26 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 
   function onGutterClick(cm, line, gutter) {
-    var opts = cm.state.foldGutter.options;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var opts = state.options;
     if (gutter != opts.gutter) return;
     cm.foldCode(Pos(line, 0), opts.rangeFinder);
   }
 
   function onChange(cm) {
-    var state = cm.state.foldGutter, opts = cm.state.foldGutter.options;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var opts = state.options;
     state.from = state.to = 0;
     clearTimeout(state.changeUpdate);
     state.changeUpdate = setTimeout(function() { updateInViewport(cm); }, opts.foldOnChangeTimeSpan || 600);
   }
 
   function onViewportChange(cm) {
-    var state = cm.state.foldGutter, opts = cm.state.foldGutter.options;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var opts = state.options;
     clearTimeout(state.changeUpdate);
     state.changeUpdate = setTimeout(function() {
       var vp = cm.getViewport();
@@ -5302,7 +5308,9 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 
   function onFold(cm, from) {
-    var state = cm.state.foldGutter, line = from.line;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var line = from.line;
     if (line >= state.from && line < state.to)
       updateFoldInfo(cm, line, line + 1);
   }
@@ -5519,6 +5527,18 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     return cm.showHint(newOpts);
   };
 
+  var asyncRunID = 0;
+  function retrieveHints(getter, cm, options, then) {
+    if (getter.async) {
+      var id = ++asyncRunID;
+      getter(cm, function(hints) {
+        if (asyncRunID == id) then(hints);
+      }, options);
+    } else {
+      then(getter(cm, options));
+    }
+  }
+
   CodeMirror.defineExtension("showHint", function(options) {
     // We want a single cursor position.
     if (this.listSelections().length > 1 || this.somethingSelected()) return;
@@ -5529,10 +5549,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     if (!getHints) return;
 
     CodeMirror.signal(this, "startCompletion", this);
-    if (getHints.async)
-      getHints(this, function(hints) { completion.showHints(hints); }, completion.options);
-    else
-      return completion.showHints(getHints(this, completion.options));
+    return retrieveHints(getHints, this, completion.options, function(hints) { completion.showHints(hints); });
   });
 
   function Completion(cm, options) {
@@ -5597,11 +5614,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
       function update() {
         if (finished) return;
         CodeMirror.signal(data, "update");
-        var getHints = completion.options.hint;
-        if (getHints.async)
-          getHints(completion.cm, finishUpdate, completion.options);
-        else
-          finishUpdate(getHints(completion.cm, completion.options));
+        retrieveHints(completion.options.hint, completion.cm, completion.options, finishUpdate);
       }
       function finishUpdate(data_) {
         data = data_;
@@ -6261,6 +6274,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
     for (var opt in optionHandlers) if (optionHandlers.hasOwnProperty(opt))
       optionHandlers[opt](this, options[opt], Init);
     maybeUpdateLineNumberWidth(this);
+    if (options.finishInit) options.finishInit(this);
     for (var i = 0; i < initHooks.length; ++i) initHooks[i](this);
     endOperation(this);
     // Suppress optimizelegibility in Webkit, since it breaks text
@@ -6800,7 +6814,17 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
     this.oldDisplayWidth = displayWidth(cm);
     this.force = force;
     this.dims = getDimensions(cm);
+    this.events = [];
   }
+
+  DisplayUpdate.prototype.signal = function(emitter, type) {
+    if (hasHandler(emitter, type))
+      this.events.push(arguments);
+  };
+  DisplayUpdate.prototype.finish = function() {
+    for (var i = 0; i < this.events.length; i++)
+      signal.apply(null, this.events[i]);
+  };
 
   function maybeClipScrollbars(cm) {
     var display = cm.display;
@@ -6912,9 +6936,9 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
       updateScrollbars(cm, barMeasure);
     }
 
-    signalLater(cm, "update", cm);
+    update.signal(cm, "update", cm);
     if (cm.display.viewFrom != cm.display.reportedViewFrom || cm.display.viewTo != cm.display.reportedViewTo) {
-      signalLater(cm, "viewportChange", cm, cm.display.viewFrom, cm.display.viewTo);
+      update.signal(cm, "viewportChange", cm, cm.display.viewFrom, cm.display.viewTo);
       cm.display.reportedViewFrom = cm.display.viewFrom; cm.display.reportedViewTo = cm.display.viewTo;
     }
   }
@@ -6928,6 +6952,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
       updateSelection(cm);
       setDocumentHeight(cm, barMeasure);
       updateScrollbars(cm, barMeasure);
+      update.finish();
     }
   }
 
@@ -8388,6 +8413,8 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
     // Fire change events, and delayed event handlers
     if (op.changeObjs)
       signal(cm, "changes", cm, op.changeObjs);
+    if (op.update)
+      op.update.finish();
   }
 
   // Run the given function in an operation
@@ -8762,8 +8789,10 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
   }
 
   function focusInput(cm) {
-    if (cm.options.readOnly != "nocursor" && (!mobile || activeElt() != cm.display.input))
-      cm.display.input.focus();
+    if (cm.options.readOnly != "nocursor" && (!mobile || activeElt() != cm.display.input)) {
+      try { cm.display.input.focus(); }
+      catch (e) {} // IE8 will throw if the textarea is display: none or not in DOM
+    }
   }
 
   function ensureFocus(cm) {
@@ -11272,7 +11301,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
   // FROMTEXTAREA
 
   CodeMirror.fromTextArea = function(textarea, options) {
-    if (!options) options = {};
+    options = options ? copyObj(options) : {};
     options.value = textarea.value;
     if (!options.tabindex && textarea.tabindex)
       options.tabindex = textarea.tabindex;
@@ -11303,23 +11332,26 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
       }
     }
 
+    options.finishInit = function(cm) {
+      cm.save = save;
+      cm.getTextArea = function() { return textarea; };
+      cm.toTextArea = function() {
+        cm.toTextArea = isNaN; // Prevent this from being ran twice
+        save();
+        textarea.parentNode.removeChild(cm.getWrapperElement());
+        textarea.style.display = "";
+        if (textarea.form) {
+          off(textarea.form, "submit", save);
+          if (typeof textarea.form.submit == "function")
+            textarea.form.submit = realSubmit;
+        }
+      };
+    };
+
     textarea.style.display = "none";
     var cm = CodeMirror(function(node) {
       textarea.parentNode.insertBefore(node, textarea.nextSibling);
     }, options);
-    cm.save = save;
-    cm.getTextArea = function() { return textarea; };
-    cm.toTextArea = function() {
-      cm.toTextArea = isNaN; // Prevent this from being ran twice
-      save();
-      textarea.parentNode.removeChild(cm.getWrapperElement());
-      textarea.style.display = "";
-      if (textarea.form) {
-        off(textarea.form, "submit", save);
-        if (typeof textarea.form.submit == "function")
-          textarea.form.submit = realSubmit;
-      }
-    };
     return cm;
   };
 
@@ -12330,6 +12362,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
   function defaultSpecialCharPlaceholder(ch) {
     var token = elt("span", "\u2022", "cm-invalidchar");
     token.title = "\\u" + ch.charCodeAt(0).toString(16);
+    token.setAttribute("aria-label", token.title);
     return token;
   }
 
@@ -12363,6 +12396,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
         if (m[0] == "\t") {
           var tabSize = builder.cm.options.tabSize, tabWidth = tabSize - builder.col % tabSize;
           var txt = content.appendChild(elt("span", spaceStr(tabWidth), "cm-tab"));
+          txt.setAttribute("role", "presentation");
           builder.col += tabWidth;
         } else {
           var txt = builder.cm.options.specialCharPlaceholder(m[0]);
@@ -13727,12 +13761,14 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
     return removeChildren(parent).appendChild(e);
   }
 
-  function contains(parent, child) {
+  var contains = CodeMirror.contains = function(parent, child) {
     if (parent.contains)
       return parent.contains(child);
-    while (child = child.parentNode)
+    while (child = child.parentNode) {
+      if (child.nodeType == 11) child = child.host;
       if (child == parent) return true;
-  }
+    }
+  };
 
   function activeElt() { return document.activeElement; }
   // Older versions of IE throws unspecified error when touching
@@ -14190,7 +14226,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
 
   // THE END
 
-  CodeMirror.version = "4.12.0";
+  CodeMirror.version = "4.13.0";
 
   return CodeMirror;
 });
@@ -24723,7 +24759,7 @@ return jQuery;
 },{}],17:[function(require,module,exports){
 module.exports={
   "name": "yasgui-utils",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "description": "Utils for YASGUI libs",
   "main": "src/main.js",
   "repository": {
@@ -24736,12 +24772,13 @@ module.exports={
       "url": "http://yasgui.github.io/license.txt"
     }
   ],
-  "author": "Laurens Rietveld",
+  "author": {
+    "name": "Laurens Rietveld"
+  },
   "maintainers": [
     {
-      "name": "Laurens Rietveld",
-      "email": "laurens.rietveld@gmail.com",
-      "web": "http://laurensrietveld.nl"
+      "name": "laurens.rietveld",
+      "email": "laurens.rietveld@gmail.com"
     }
   ],
   "bugs": {
@@ -24750,7 +24787,22 @@ module.exports={
   "homepage": "https://github.com/YASGUI/Utils",
   "dependencies": {
     "store": "^1.3.14"
-  }
+  },
+  "_id": "yasgui-utils@1.5.2",
+  "dist": {
+    "shasum": "c7d06928898e788ee2958969e4c2dc26f435aa64",
+    "tarball": "http://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.5.2.tgz"
+  },
+  "_from": "yasgui-utils@>=1.4.1 <2.0.0",
+  "_npmVersion": "1.4.3",
+  "_npmUser": {
+    "name": "laurens.rietveld",
+    "email": "laurens.rietveld@gmail.com"
+  },
+  "directories": {},
+  "_shasum": "c7d06928898e788ee2958969e4c2dc26f435aa64",
+  "_resolved": "https://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.5.2.tgz",
+  "readme": "ERROR: No README data found!"
 }
 
 },{}],18:[function(require,module,exports){
@@ -24760,6 +24812,17 @@ module.exports = {
 	svg: require("./svg.js"),
 	version: {
 		"yasgui-utils" : require("../package.json").version,
+	},
+	nestedExists : function(obj) {
+		var args = Array.prototype.slice.call(arguments, 1);
+
+		for (var i = 0; i < args.length; i++) {
+			if (!obj || !obj.hasOwnProperty(args[i])) {
+				return false;
+			}
+			obj = obj[args[i]];
+		}
+		return true;
 	}
 };
 
@@ -24780,7 +24843,7 @@ var times = {
 var root = module.exports = {
 	set : function(key, val, exp) {
     if (!store.enabled) return;//this is probably in private mode. Don't run, as we might get Js errors
-		if (key && val) {
+		if (key && val !== undefined) {
 			if (typeof exp == "string") {
 				exp = times[exp]();
 			}
@@ -26678,7 +26741,31 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 			}
 		}
 	}
+
+	/**
+	 * merge additional request headers
+	 */
+	if (config.headers && !$.isEmptyObject(config.headers))
+		$.extend(ajaxConfig.headers, config.headers);
+
+	
 	ajaxConfig.data = yasqe.getUrlArguments(config);
+	var countAjaxConfig = {};
+	$.extend(true, countAjaxConfig, ajaxConfig);
+	if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
+		countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
+		countAjaxConfig.complete = config.callbacks.countCallback;
+	}
+
+	
+	if (config.setQueryLimit && (typeof config.setQueryLimit == "function")) {
+		ajaxConfig.data.forEach(function(o) {
+			if (o.name == "query") {
+				o.value = config.setQueryLimit(o.value);
+			}
+		});
+	}
+
 	if (!handlerDefined && !callback)
 		return; // ok, we can query, but have no callbacks. just stop now
 	
@@ -26686,14 +26773,6 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	if (callback)
 		ajaxConfig.complete = callback;
 
-	
-
-	/**
-	 * merge additional request headers
-	 */
-	if (config.headers && !$.isEmptyObject(config.headers))
-		$.extend(ajaxConfig.headers, config.headers);
-	
 	YASQE.updateQueryButton(yasqe, "busy");
 	
 	var updateQueryButton = function() {
@@ -26705,7 +26784,13 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	} else {
 		ajaxConfig.complete = updateQueryButton;
 	}
+
+	if (config.callbacks.resetResults && (typeof config.callbacks.resetResults == "function")) {
+		config.callbacks.resetResults();
+	}
+
 	yasqe.xhr = $.ajax(ajaxConfig);
+	$.ajax(countAjaxConfig);
 };
 
 

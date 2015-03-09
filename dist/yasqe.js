@@ -5267,20 +5267,26 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 
   function onGutterClick(cm, line, gutter) {
-    var opts = cm.state.foldGutter.options;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var opts = state.options;
     if (gutter != opts.gutter) return;
     cm.foldCode(Pos(line, 0), opts.rangeFinder);
   }
 
   function onChange(cm) {
-    var state = cm.state.foldGutter, opts = cm.state.foldGutter.options;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var opts = state.options;
     state.from = state.to = 0;
     clearTimeout(state.changeUpdate);
     state.changeUpdate = setTimeout(function() { updateInViewport(cm); }, opts.foldOnChangeTimeSpan || 600);
   }
 
   function onViewportChange(cm) {
-    var state = cm.state.foldGutter, opts = cm.state.foldGutter.options;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var opts = state.options;
     clearTimeout(state.changeUpdate);
     state.changeUpdate = setTimeout(function() {
       var vp = cm.getViewport();
@@ -5302,7 +5308,9 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 
   function onFold(cm, from) {
-    var state = cm.state.foldGutter, line = from.line;
+    var state = cm.state.foldGutter;
+    if (!state) return;
+    var line = from.line;
     if (line >= state.from && line < state.to)
       updateFoldInfo(cm, line, line + 1);
   }
@@ -5519,6 +5527,18 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     return cm.showHint(newOpts);
   };
 
+  var asyncRunID = 0;
+  function retrieveHints(getter, cm, options, then) {
+    if (getter.async) {
+      var id = ++asyncRunID;
+      getter(cm, function(hints) {
+        if (asyncRunID == id) then(hints);
+      }, options);
+    } else {
+      then(getter(cm, options));
+    }
+  }
+
   CodeMirror.defineExtension("showHint", function(options) {
     // We want a single cursor position.
     if (this.listSelections().length > 1 || this.somethingSelected()) return;
@@ -5529,10 +5549,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
     if (!getHints) return;
 
     CodeMirror.signal(this, "startCompletion", this);
-    if (getHints.async)
-      getHints(this, function(hints) { completion.showHints(hints); }, completion.options);
-    else
-      return completion.showHints(getHints(this, completion.options));
+    return retrieveHints(getHints, this, completion.options, function(hints) { completion.showHints(hints); });
   });
 
   function Completion(cm, options) {
@@ -5597,11 +5614,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
       function update() {
         if (finished) return;
         CodeMirror.signal(data, "update");
-        var getHints = completion.options.hint;
-        if (getHints.async)
-          getHints(completion.cm, finishUpdate, completion.options);
-        else
-          finishUpdate(getHints(completion.cm, completion.options));
+        retrieveHints(completion.options.hint, completion.cm, completion.options, finishUpdate);
       }
       function finishUpdate(data_) {
         data = data_;
@@ -6328,7 +6341,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
 },{}],15:[function(require,module,exports){
 module.exports={
   "name": "yasgui-utils",
-  "version": "1.5.0",
+  "version": "1.5.2",
   "description": "Utils for YASGUI libs",
   "main": "src/main.js",
   "repository": {
@@ -6341,12 +6354,13 @@ module.exports={
       "url": "http://yasgui.github.io/license.txt"
     }
   ],
-  "author": "Laurens Rietveld",
+  "author": {
+    "name": "Laurens Rietveld"
+  },
   "maintainers": [
     {
-      "name": "Laurens Rietveld",
-      "email": "laurens.rietveld@gmail.com",
-      "web": "http://laurensrietveld.nl"
+      "name": "laurens.rietveld",
+      "email": "laurens.rietveld@gmail.com"
     }
   ],
   "bugs": {
@@ -6355,7 +6369,22 @@ module.exports={
   "homepage": "https://github.com/YASGUI/Utils",
   "dependencies": {
     "store": "^1.3.14"
-  }
+  },
+  "_id": "yasgui-utils@1.5.2",
+  "dist": {
+    "shasum": "c7d06928898e788ee2958969e4c2dc26f435aa64",
+    "tarball": "http://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.5.2.tgz"
+  },
+  "_from": "yasgui-utils@>=1.4.1 <2.0.0",
+  "_npmVersion": "1.4.3",
+  "_npmUser": {
+    "name": "laurens.rietveld",
+    "email": "laurens.rietveld@gmail.com"
+  },
+  "directories": {},
+  "_shasum": "c7d06928898e788ee2958969e4c2dc26f435aa64",
+  "_resolved": "https://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.5.2.tgz",
+  "readme": "ERROR: No README data found!"
 }
 
 },{}],16:[function(require,module,exports){
@@ -6365,6 +6394,17 @@ module.exports = {
 	svg: require("./svg.js"),
 	version: {
 		"yasgui-utils" : require("../package.json").version,
+	},
+	nestedExists : function(obj) {
+		var args = Array.prototype.slice.call(arguments, 1);
+
+		for (var i = 0; i < args.length; i++) {
+			if (!obj || !obj.hasOwnProperty(args[i])) {
+				return false;
+			}
+			obj = obj[args[i]];
+		}
+		return true;
 	}
 };
 
@@ -6385,7 +6425,7 @@ var times = {
 var root = module.exports = {
 	set : function(key, val, exp) {
     if (!store.enabled) return;//this is probably in private mode. Don't run, as we might get Js errors
-		if (key && val) {
+		if (key && val !== undefined) {
 			if (typeof exp == "string") {
 				exp = times[exp]();
 			}
@@ -8283,7 +8323,31 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 			}
 		}
 	}
+
+	/**
+	 * merge additional request headers
+	 */
+	if (config.headers && !$.isEmptyObject(config.headers))
+		$.extend(ajaxConfig.headers, config.headers);
+
+	
 	ajaxConfig.data = yasqe.getUrlArguments(config);
+	var countAjaxConfig = {};
+	$.extend(true, countAjaxConfig, ajaxConfig);
+	if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
+		countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
+		countAjaxConfig.complete = config.callbacks.countCallback;
+	}
+
+	
+	if (config.setQueryLimit && (typeof config.setQueryLimit == "function")) {
+		ajaxConfig.data.forEach(function(o) {
+			if (o.name == "query") {
+				o.value = config.setQueryLimit(o.value);
+			}
+		});
+	}
+
 	if (!handlerDefined && !callback)
 		return; // ok, we can query, but have no callbacks. just stop now
 	
@@ -8291,14 +8355,6 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	if (callback)
 		ajaxConfig.complete = callback;
 
-	
-
-	/**
-	 * merge additional request headers
-	 */
-	if (config.headers && !$.isEmptyObject(config.headers))
-		$.extend(ajaxConfig.headers, config.headers);
-	
 	YASQE.updateQueryButton(yasqe, "busy");
 	
 	var updateQueryButton = function() {
@@ -8310,7 +8366,13 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	} else {
 		ajaxConfig.complete = updateQueryButton;
 	}
+
+	if (config.callbacks.resetResults && (typeof config.callbacks.resetResults == "function")) {
+		config.callbacks.resetResults();
+	}
+
 	yasqe.xhr = $.ajax(ajaxConfig);
+	$.ajax(countAjaxConfig);
 };
 
 
