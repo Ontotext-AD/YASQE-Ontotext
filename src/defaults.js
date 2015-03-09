@@ -16,6 +16,7 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 			showToken : /\w/
 		},
 		tabMode : "indent",
+        autoCloseBrackets: true,
 		lineNumbers : true,
 	    lineWrapping: true,
 	    
