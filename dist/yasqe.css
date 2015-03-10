@@ -327,11 +327,6 @@
     content: "\25B8"; }
   .yasqe .svgImg {
     display: inline-block; }
-  .yasqe .CodeMirror {
-    line-height: 1.5em;
-    border: 1px solid #d1d1d1; }
-  .yasqe pre {
-    font-size: 13px; }
   .yasqe span.cm-error {
     border-bottom: 2px dotted red; }
   .yasqe .gutterErrorBar {

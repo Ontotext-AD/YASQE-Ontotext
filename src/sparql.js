@@ -48,12 +48,15 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 
 	
 	ajaxConfig.data = yasqe.getUrlArguments(config);
-	var countAjaxConfig = {};
-	$.extend(true, countAjaxConfig, ajaxConfig);
-	if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
-		countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
-		countAjaxConfig.complete = config.callbacks.countCallback;
+	if (window.editor.getQueryMode() != "update") {
+			var countAjaxConfig = {};
+			$.extend(true, countAjaxConfig, ajaxConfig);
+			if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
+				countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
+				countAjaxConfig.complete = config.callbacks.countCallback;
+			}
 	}
+
 
 	
 	if (config.setQueryLimit && (typeof config.setQueryLimit == "function")) {
@@ -88,7 +91,10 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	}
 
 	yasqe.xhr = $.ajax(ajaxConfig);
-	$.ajax(countAjaxConfig);
+	if (countAjaxConfig) {
+		$.ajax(countAjaxConfig);
+	}
+	
 };
 
 

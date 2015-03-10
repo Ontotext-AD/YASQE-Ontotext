@@ -3,7 +3,7 @@
 //the current browserify version does not support require-ing js files which are used as entry-point
 //this way, we can still require our main.js file
 module.exports = require('./main.js');
-},{"./main.js":28}],2:[function(require,module,exports){
+},{"./main.js":30}],2:[function(require,module,exports){
 'use strict';
 /*
   jQuery deparam is an extraction of the deparam method from Ben Alman's jQuery BBQ
@@ -4802,6 +4802,169 @@ Trie.prototype = {
   else // Plain browser env
     mod(CodeMirror);
 })(function(CodeMirror) {
+  var DEFAULT_BRACKETS = "()[]{}''\"\"";
+  var DEFAULT_TRIPLES = "'\"";
+  var DEFAULT_EXPLODE_ON_ENTER = "[]{}";
+  var SPACE_CHAR_REGEX = /\s/;
+
+  var Pos = CodeMirror.Pos;
+
+  CodeMirror.defineOption("autoCloseBrackets", false, function(cm, val, old) {
+    if (old != CodeMirror.Init && old)
+      cm.removeKeyMap("autoCloseBrackets");
+    if (!val) return;
+    var pairs = DEFAULT_BRACKETS, triples = DEFAULT_TRIPLES, explode = DEFAULT_EXPLODE_ON_ENTER;
+    if (typeof val == "string") pairs = val;
+    else if (typeof val == "object") {
+      if (val.pairs != null) pairs = val.pairs;
+      if (val.triples != null) triples = val.triples;
+      if (val.explode != null) explode = val.explode;
+    }
+    var map = buildKeymap(pairs, triples);
+    if (explode) map.Enter = buildExplodeHandler(explode);
+    cm.addKeyMap(map);
+  });
+
+  function charsAround(cm, pos) {
+    var str = cm.getRange(Pos(pos.line, pos.ch - 1),
+                          Pos(pos.line, pos.ch + 1));
+    return str.length == 2 ? str : null;
+  }
+
+  // Project the token type that will exists after the given char is
+  // typed, and use it to determine whether it would cause the start
+  // of a string token.
+  function enteringString(cm, pos, ch) {
+    var line = cm.getLine(pos.line);
+    var token = cm.getTokenAt(pos);
+    if (/\bstring2?\b/.test(token.type)) return false;
+    var stream = new CodeMirror.StringStream(line.slice(0, pos.ch) + ch + line.slice(pos.ch), 4);
+    stream.pos = stream.start = token.start;
+    for (;;) {
+      var type1 = cm.getMode().token(stream, token.state);
+      if (stream.pos >= pos.ch + 1) return /\bstring2?\b/.test(type1);
+      stream.start = stream.pos;
+    }
+  }
+
+  function buildKeymap(pairs, triples) {
+    var map = {
+      name : "autoCloseBrackets",
+      Backspace: function(cm) {
+        if (cm.getOption("disableInput")) return CodeMirror.Pass;
+        var ranges = cm.listSelections();
+        for (var i = 0; i < ranges.length; i++) {
+          if (!ranges[i].empty()) return CodeMirror.Pass;
+          var around = charsAround(cm, ranges[i].head);
+          if (!around || pairs.indexOf(around) % 2 != 0) return CodeMirror.Pass;
+        }
+        for (var i = ranges.length - 1; i >= 0; i--) {
+          var cur = ranges[i].head;
+          cm.replaceRange("", Pos(cur.line, cur.ch - 1), Pos(cur.line, cur.ch + 1));
+        }
+      }
+    };
+    var closingBrackets = "";
+    for (var i = 0; i < pairs.length; i += 2) (function(left, right) {
+      closingBrackets += right;
+      map["'" + left + "'"] = function(cm) {
+        if (cm.getOption("disableInput")) return CodeMirror.Pass;
+        var ranges = cm.listSelections(), type, next;
+        for (var i = 0; i < ranges.length; i++) {
+          var range = ranges[i], cur = range.head, curType;
+          var next = cm.getRange(cur, Pos(cur.line, cur.ch + 1));
+          if (!range.empty()) {
+            curType = "surround";
+          } else if (left == right && next == right) {
+            if (cm.getRange(cur, Pos(cur.line, cur.ch + 3)) == left + left + left)
+              curType = "skipThree";
+            else
+              curType = "skip";
+          } else if (left == right && cur.ch > 1 && triples.indexOf(left) >= 0 &&
+                     cm.getRange(Pos(cur.line, cur.ch - 2), cur) == left + left &&
+                     (cur.ch <= 2 || cm.getRange(Pos(cur.line, cur.ch - 3), Pos(cur.line, cur.ch - 2)) != left)) {
+            curType = "addFour";
+          } else if (left == '"' || left == "'") {
+            if (!CodeMirror.isWordChar(next) && enteringString(cm, cur, left)) curType = "both";
+            else return CodeMirror.Pass;
+          } else if (cm.getLine(cur.line).length == cur.ch || closingBrackets.indexOf(next) >= 0 || SPACE_CHAR_REGEX.test(next)) {
+            curType = "both";
+          } else {
+            return CodeMirror.Pass;
+          }
+          if (!type) type = curType;
+          else if (type != curType) return CodeMirror.Pass;
+        }
+
+        cm.operation(function() {
+          if (type == "skip") {
+            cm.execCommand("goCharRight");
+          } else if (type == "skipThree") {
+            for (var i = 0; i < 3; i++)
+              cm.execCommand("goCharRight");
+          } else if (type == "surround") {
+            var sels = cm.getSelections();
+            for (var i = 0; i < sels.length; i++)
+              sels[i] = left + sels[i] + right;
+            cm.replaceSelections(sels, "around");
+          } else if (type == "both") {
+            cm.replaceSelection(left + right, null);
+            cm.execCommand("goCharLeft");
+          } else if (type == "addFour") {
+            cm.replaceSelection(left + left + left + left, "before");
+            cm.execCommand("goCharRight");
+          }
+        });
+      };
+      if (left != right) map["'" + right + "'"] = function(cm) {
+        var ranges = cm.listSelections();
+        for (var i = 0; i < ranges.length; i++) {
+          var range = ranges[i];
+          if (!range.empty() ||
+              cm.getRange(range.head, Pos(range.head.line, range.head.ch + 1)) != right)
+            return CodeMirror.Pass;
+        }
+        cm.execCommand("goCharRight");
+      };
+    })(pairs.charAt(i), pairs.charAt(i + 1));
+    return map;
+  }
+
+  function buildExplodeHandler(pairs) {
+    return function(cm) {
+      if (cm.getOption("disableInput")) return CodeMirror.Pass;
+      var ranges = cm.listSelections();
+      for (var i = 0; i < ranges.length; i++) {
+        if (!ranges[i].empty()) return CodeMirror.Pass;
+        var around = charsAround(cm, ranges[i].head);
+        if (!around || pairs.indexOf(around) % 2 != 0) return CodeMirror.Pass;
+      }
+      cm.operation(function() {
+        cm.replaceSelection("\n\n", null);
+        cm.execCommand("goCharLeft");
+        ranges = cm.listSelections();
+        for (var i = 0; i < ranges.length; i++) {
+          var line = ranges[i].head.line;
+          cm.indentLine(line, null, true);
+          cm.indentLine(line + 1, null, true);
+        }
+      });
+    };
+  }
+});
+
+},{"codemirror":undefined}],7:[function(require,module,exports){
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: http://codemirror.net/LICENSE
+
+(function(mod) {
+  if (typeof exports == "object" && typeof module == "object") // CommonJS
+    mod((function(){try{return require('codemirror')}catch(e){return window.CodeMirror}})());
+  else if (typeof define == "function" && define.amd) // AMD
+    define(["../../lib/codemirror"], mod);
+  else // Plain browser env
+    mod(CodeMirror);
+})(function(CodeMirror) {
   var ie_lt8 = /MSIE \d/.test(navigator.userAgent) &&
     (document.documentMode == null || document.documentMode < 8);
 
@@ -4912,7 +5075,7 @@ Trie.prototype = {
   });
 });
 
-},{"codemirror":undefined}],7:[function(require,module,exports){
+},{"codemirror":undefined}],8:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5019,7 +5182,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
 
 });
 
-},{"codemirror":undefined}],8:[function(require,module,exports){
+},{"codemirror":undefined}],9:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5170,7 +5333,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   });
 });
 
-},{"codemirror":undefined}],9:[function(require,module,exports){
+},{"codemirror":undefined}],10:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5316,7 +5479,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   }
 });
 
-},{"./foldcode":8,"codemirror":undefined}],10:[function(require,module,exports){
+},{"./foldcode":9,"codemirror":undefined}],11:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5500,7 +5663,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   };
 });
 
-},{"codemirror":undefined}],11:[function(require,module,exports){
+},{"codemirror":undefined}],12:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5896,7 +6059,7 @@ CodeMirror.registerHelper("fold", "include", function(cm, start) {
   CodeMirror.defineOption("hintOptions", null);
 });
 
-},{"codemirror":undefined}],12:[function(require,module,exports){
+},{"codemirror":undefined}],13:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -5970,7 +6133,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
 
 });
 
-},{"codemirror":undefined}],13:[function(require,module,exports){
+},{"codemirror":undefined}],14:[function(require,module,exports){
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
 // Distributed under an MIT license: http://codemirror.net/LICENSE
 
@@ -6161,7 +6324,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
   });
 });
 
-},{"codemirror":undefined}],14:[function(require,module,exports){
+},{"codemirror":undefined}],15:[function(require,module,exports){
 ;(function(win){
 	var store = {},
 		doc = win.document,
@@ -6338,7 +6501,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
 
 })(Function('return this')());
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 module.exports={
   "name": "yasgui-utils",
   "version": "1.5.2",
@@ -6387,7 +6550,7 @@ module.exports={
   "readme": "ERROR: No README data found!"
 }
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 window.console = window.console || {"log":function(){}};//make sure any console statements don't break IE
 module.exports = {
 	storage: require("./storage.js"),
@@ -6408,7 +6571,7 @@ module.exports = {
 	}
 };
 
-},{"../package.json":15,"./storage.js":17,"./svg.js":18}],17:[function(require,module,exports){
+},{"../package.json":16,"./storage.js":18,"./svg.js":19}],18:[function(require,module,exports){
 var store = require("store");
 var times = {
 	day: function() {
@@ -6460,7 +6623,7 @@ var root = module.exports = {
 
 };
 
-},{"store":14}],18:[function(require,module,exports){
+},{"store":15}],19:[function(require,module,exports){
 module.exports = {
 	draw: function(parent, svgString) {
 		if (!parent) return;
@@ -6489,7 +6652,7 @@ module.exports = {
 		return false;
 	}
 };
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 module.exports={
   "name": "yasgui-yasqe",
   "description": "Yet Another SPARQL Query Editor",
@@ -6573,7 +6736,7 @@ module.exports={
   }
 }
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})(),
 	utils = require('../utils.js'),
@@ -6866,7 +7029,7 @@ var selectHint = function(yasqe, data, completion) {
 //	loadBulkCompletions: loadBulkCompletions,
 //};
 
-},{"../../lib/trie.js":4,"../utils.js":33,"jquery":undefined,"yasgui-utils":16}],21:[function(require,module,exports){
+},{"../../lib/trie.js":4,"../utils.js":35,"jquery":undefined,"yasgui-utils":17}],22:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
 module.exports = function(yasqe, name) {
@@ -6910,7 +7073,55 @@ module.exports.preProcessToken = function(yasqe, token) {
 module.exports.postProcessToken = function(yasqe, token, suggestedString) {
 	return require('./utils.js').postprocessResourceTokenForCompletion(yasqe, token, suggestedString)
 };
-},{"./utils":24,"./utils.js":24,"jquery":undefined}],22:[function(require,module,exports){
+},{"./utils":26,"./utils.js":26,"jquery":undefined}],23:[function(require,module,exports){
+'use strict';
+var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
+module.exports = function(yasqe, name) {
+	return {
+		isValidCompletionPosition : function(){return module.exports.isValidCompletionPosition(yasqe);},
+		get : function(token, callback) {
+			return require('./utils').fetchFromLov(yasqe, this, token, callback);
+		},
+		preProcessToken: function(token) {return module.exports.preProcessToken(yasqe, token)},
+		postProcessToken: function(token, suggestedString) {return module.exports.postProcessToken(yasqe, token, suggestedString);},
+		async : true,
+		bulk : false,
+		autoShow : false,
+		persistent : name,
+		callbacks : {
+			validPosition : yasqe.autocompleters.notifications.show,
+			invalidPosition : yasqe.autocompleters.notifications.hide,
+		}
+	}
+};
+
+module.exports.isValidCompletionPosition = function(yasqe) {
+	var token = yasqe.getCompleteToken();
+	if (token.string.length == 0) 
+		return false; //we want -something- to autocomplete
+	if (token.string.indexOf("?") == 0)
+		return false; // we are typing a var
+	if ($.inArray("a", token.state.possibleCurrent) >= 0)
+		return true;// predicate pos
+	var cur = yasqe.getCursor();
+	var previousToken = yasqe.getPreviousNonWsToken(cur.line, token);
+	if (previousToken.string == "rdfs:subPropertyOf")
+		return true;
+
+	// hmm, we would like -better- checks here, e.g. checking whether we are
+	// in a subject, and whether next item is a rdfs:subpropertyof.
+	// difficult though... the grammar we use is unreliable when the query
+	// is invalid (i.e. during typing), and often the predicate is not typed
+	// yet, when we are busy writing the subject...
+	return false;
+};
+module.exports.preProcessToken = function(yasqe, token) {
+	return require('./utils.js').preprocessResourceTokenForCompletion(yasqe, token);
+};
+module.exports.postProcessToken = function(yasqe, token, suggestedString) {
+	return require('./utils.js').postprocessResourceTokenForCompletion(yasqe, token, suggestedString)
+};
+},{"./utils":26,"./utils.js":26,"jquery":undefined}],24:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
 //this is a mapping from the class names (generic ones, for compatability with codemirror themes), to what they -actually- represent
@@ -6929,24 +7140,24 @@ module.exports = function(yasqe, completerName) {
 	return {
 		isValidCompletionPosition : function(){return module.exports.isValidCompletionPosition(yasqe);},
 		get : function(token, callback) {
-			$.get("http://prefix.cc/popular/all.file.json", function(data) {
-				var prefixArray = [];
-				for ( var prefix in data) {
-					if (prefix == "bif")
-						continue;// skip this one! see #231
-					var completeString = prefix + ": <" + data[prefix] + ">";
-					prefixArray.push(completeString);// the array we want to store in localstorage
-				}
-				
-				prefixArray.sort();
-				callback(prefixArray);
-			});
+			$.get(ctx + '/repositories/' + backendRepositoryID + '/namespaces', function(data) {
+                if (data.results) {
+                    var prefixArray = data.results.bindings.map(function(namespace) {
+                        return namespace.prefix.value + ": <" + namespace.namespace.value + ">";
+                    });
+                    prefixArray.sort();
+                    callback(prefixArray);
+                }
+                //TODO: What to do on error here
+			},
+            'json'
+            );
 		},
 		preProcessToken: function(token) {return module.exports.preprocessPrefixTokenForCompletion(yasqe, token)},
 		async : true,
 		bulk : true,
 		autoShow: true,
-		persistent : completerName,
+		persistent : null,
 	};
 };
 module.exports.isValidCompletionPosition = function(yasqe) {
@@ -7034,55 +7245,203 @@ module.exports.appendPrefixIfNeeded = function(yasqe, completerName) {
 };
 
 
-},{"jquery":undefined}],23:[function(require,module,exports){
-'use strict';
-var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
-module.exports = function(yasqe, name) {
-	return {
-		isValidCompletionPosition : function(){return module.exports.isValidCompletionPosition(yasqe);},
-		get : function(token, callback) {
-			return require('./utils').fetchFromLov(yasqe, this, token, callback);
-		},
-		preProcessToken: function(token) {return module.exports.preProcessToken(yasqe, token)},
-		postProcessToken: function(token, suggestedString) {return module.exports.postProcessToken(yasqe, token, suggestedString);},
-		async : true,
-		bulk : false,
-		autoShow : false,
-		persistent : name,
-		callbacks : {
-			validPosition : yasqe.autocompleters.notifications.show,
-			invalidPosition : yasqe.autocompleters.notifications.hide,
-		}
-	}
+},{"jquery":undefined}],25:[function(require,module,exports){
+/**
+ * Auto completes standard sparql functions
+ */
+module.exports = function(yasqe, completerName) {
+    return {
+        /**
+         * Check whether the cursor is in a proper position for this autocompletion.
+         * 
+         * @property autocompletions.variableNames.isValidCompletionPosition
+         * @type function
+         * @param yasqe {doc}
+         * @return boolean
+         */
+        isValidCompletionPosition : function() {
+            var token = yasqe.getTokenAt(yasqe.getCursor());
+            if (token.type != "ws") {
+                token = yasqe.getCompleteToken();
+                if (token.string.length > 1) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        /**
+         * Get the autocompletions. Either a function which returns an
+         * array, or an actual array. The array should be in the form ["http://...",....]
+         * 
+         * @property autocompletions.variableNames.get
+         * @type function|array
+         * @param doc {YASQE}
+         * @param token {object|string} When bulk is disabled, use this token to autocomplete
+         * @param completionType {string} what type of autocompletion we try to attempt. Classes, properties, or prefixes)
+         * @param callback {function} In case async is enabled, use this callback
+         * @default function (YASQE.autocompleteVariables)
+         */
+        get : function(token, callback) {
+            //Taken from http://www.w3.org/TR/sparql11-query/#grammar BuiltInCall
+            var functions = [ 'COUNT', 'SUM', 'MIN', 'MAX', 'AVG', 'SAMPLE', 'STR', 'LANG', 'LANGMATCHES', 'DATATYPE', 'BOUND', 'IRI', 'URI',
+                'BNODE', 'RAND', 'ABS', 'CEIL', 'FLOOR', 'ROUND', 'CONCAT', 'SUBSTR', 'STRLEN', 'REPLACE', 'UCASE', 'LCASE', 'ENCODE_FOR_URI',
+                'CONTAINS', 'STRSTARTS', 'STRENDS', 'STRBEFORE', 'STRAFTER', 'YEAR', 'MONTH', 'DAY', 'HOURS', 'MINUTES', 'SECONDS', 'TIMEZONE',
+                'TZ', 'NOW', 'UUID', 'STRUUID', 'MD5', 'SHA1', 'SHA256', 'SHA384', 'SHA512', 'COALESCE', 'IF', 'STRLANG', 'STRDT', 'sameTerm',
+                'isIRI', 'isURI', 'isBLANK', 'isLITERAL', 'isNUMERIC', 'REGEX', 'EXISTS', 'FILTER'
+            ];
+
+            var result = [];
+            for (var i = 0; i < functions.length; i++) {
+                var f = functions[i];
+                var lowercasedF = f.toLowerCase();
+                var lowercasedToken = token.toLowerCase();
+                if (lowercasedF.indexOf(lowercasedToken) !== 0) {
+                    continue;
+                }
+                result.push(f + '(');
+            }
+            result.sort();
+            return result;
+        },
+
+        /**
+         * Preprocesses the codemirror token before matching it with our autocompletions list.
+         * Use this for e.g. autocompleting prefixed resources when your autocompletion list contains only full-length URIs
+         * I.e., foaf:name -> http://xmlns.com/foaf/0.1/name
+         * 
+         * @property autocompletions.variableNames.preProcessToken
+         * @type function
+         * @param doc {YASQE}
+         * @param token {object} The CodeMirror token, including the position of this token in the query, as well as the actual string
+         * @return token {object} Return the same token (possibly with more data added to it, which you can use in the postProcessing step)
+         * @default null
+         */
+        preProcessToken: null,
+        /**
+         * Postprocesses the autocompletion suggestion.
+         * Use this for e.g. returning a prefixed URI based on a full-length URI suggestion
+         * I.e., http://xmlns.com/foaf/0.1/name -> foaf:name
+         * 
+         * @property autocompletions.variableNames.postProcessToken
+         * @type function
+         * @param doc {YASQE}
+         * @param token {object} The CodeMirror token, including the position of this token in the query, as well as the actual string
+         * @param suggestion {string} The suggestion which you are post processing
+         * @return post-processed suggestion {string}
+         * @default null
+         */
+        postProcessToken: null,
+        /**
+         * The get function is asynchronous
+         * 
+         * @property autocompletions.variableNames.async
+         * @type boolean
+         * @default false
+         */
+        async : false,
+        /**
+         * Use bulk loading of variableNames: all variable names are retrieved
+         * onLoad using the get() function. Alternatively, disable bulk
+         * loading, to call the get() function whenever a token needs
+         * autocompletion (in this case, the completion token is passed on
+         * to the get() function) whenever you have an autocompletion list that is static, and 
+         * that easily fits in memory, we advice you to enable bulk for
+         * performance reasons (especially as we store the autocompletions
+         * in a trie)
+         * 
+         * @property autocompletions.variableNames.bulk
+         * @type boolean
+         * @default false
+         */
+        bulk : false,
+        /**
+         * Auto-show the autocompletion dialog. Disabling this requires the
+         * user to press [ctrl|cmd]-space to summon the dialog. Note: this
+         * only works when completions are not fetched asynchronously
+         * 
+         * @property autocompletions.variableNames.autoShow
+         * @type boolean
+         * @default false
+         */
+        autoShow : true,
+        /**
+         * Automatically store autocompletions in localstorage. This is
+         * particularly useful when the get() function is an expensive ajax
+         * call. Autocompletions are stored for a period of a month. Set
+         * this property to null (or remove it), to disable the use of
+         * localstorage. Otherwise, set a string value (or a function
+         * returning a string val), returning the key in which to store the
+         * data Note: this feature only works combined with completions
+         * loaded in memory (i.e. bulk: true)
+         * 
+         * @property autocompletions.variableNames.persistent
+         * @type string|function
+         * @default null
+         */
+        persistent : null,
+        /**
+         * A set of handlers. Most, taken from the CodeMirror showhint
+         * plugin: http://codemirror.net/doc/manual.html#addon_show-hint
+         * 
+         * @property autocompletions.variableNames.handlers
+         * @type object
+         */
+        handlers : {
+            /**
+             * Fires when a codemirror change occurs in a position where we
+             * can show this particular type of autocompletion
+             * 
+             * @property autocompletions.variableNames.handlers.validPosition
+             * @type function
+             * @default null
+             */
+            validPosition : null,
+            /**
+             * Fires when a codemirror change occurs in a position where we
+             * can -not- show this particular type of autocompletion
+             * 
+             * @property autocompletions.variableNames.handlers.invalidPosition
+             * @type function
+             * @default null
+             */
+            invalidPosition : null,
+            /**
+             * See http://codemirror.net/doc/manual.html#addon_show-hint
+             * 
+             * @property autocompletions.variableNames.handlers.shown
+             * @type function
+             * @default null
+             */
+            shown : null,
+            /**
+             * See http://codemirror.net/doc/manual.html#addon_show-hint
+             * 
+             * @property autocompletions.variableNames.handlers.select
+             * @type function
+             * @default null
+             */
+            select : null,
+            /**
+             * See http://codemirror.net/doc/manual.html#addon_show-hint
+             * 
+             * @property autocompletions.variableNames.handlers.pick
+             * @type function
+             * @default null
+             */
+            pick : null,
+            /**
+             * See http://codemirror.net/doc/manual.html#addon_show-hint
+             * 
+             * @property autocompletions.variableNames.handlers.close
+             * @type function
+             * @default null
+             */
+            close : null,
+        }
+    };
 };
 
-module.exports.isValidCompletionPosition = function(yasqe) {
-	var token = yasqe.getCompleteToken();
-	if (token.string.length == 0) 
-		return false; //we want -something- to autocomplete
-	if (token.string.indexOf("?") == 0)
-		return false; // we are typing a var
-	if ($.inArray("a", token.state.possibleCurrent) >= 0)
-		return true;// predicate pos
-	var cur = yasqe.getCursor();
-	var previousToken = yasqe.getPreviousNonWsToken(cur.line, token);
-	if (previousToken.string == "rdfs:subPropertyOf")
-		return true;
-
-	// hmm, we would like -better- checks here, e.g. checking whether we are
-	// in a subject, and whether next item is a rdfs:subpropertyof.
-	// difficult though... the grammar we use is unreliable when the query
-	// is invalid (i.e. during typing), and often the predicate is not typed
-	// yet, when we are busy writing the subject...
-	return false;
-};
-module.exports.preProcessToken = function(yasqe, token) {
-	return require('./utils.js').preprocessResourceTokenForCompletion(yasqe, token);
-};
-module.exports.postProcessToken = function(yasqe, token, suggestedString) {
-	return require('./utils.js').postprocessResourceTokenForCompletion(yasqe, token, suggestedString)
-};
-},{"./utils":24,"./utils.js":24,"jquery":undefined}],24:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})(),
 	utils = require('./utils.js'),
@@ -7212,7 +7571,7 @@ module.exports = {
 	preprocessResourceTokenForCompletion: preprocessResourceTokenForCompletion,
 	postprocessResourceTokenForCompletion: postprocessResourceTokenForCompletion,
 };
-},{"../imgs.js":27,"./utils.js":24,"jquery":undefined,"yasgui-utils":16}],25:[function(require,module,exports){
+},{"../imgs.js":29,"./utils.js":26,"jquery":undefined,"yasgui-utils":17}],27:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
 module.exports = function(yasqe) {
@@ -7269,7 +7628,7 @@ module.exports = function(yasqe) {
 	}
 };
 
-},{"jquery":undefined}],26:[function(require,module,exports){
+},{"jquery":undefined}],28:[function(require,module,exports){
 /**
  * The default options of YASQE (check the CodeMirror documentation for even
  * more options, such as disabling line numbers, or changing keyboard shortcut
@@ -7288,6 +7647,7 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 			showToken : /\w/
 		},
 		tabMode : "indent",
+        autoCloseBrackets: true,
 		lineNumbers : true,
 	    lineWrapping: true,
 	    
@@ -7436,7 +7796,7 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 		},
 	});
 
-},{"./main.js":28,"jquery":undefined}],27:[function(require,module,exports){
+},{"./main.js":30,"jquery":undefined}],29:[function(require,module,exports){
 'use strict';
 module.exports = {
 	loader: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%" fill="black">  <circle cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(45 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.125s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(90 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.25s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(135 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.375s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(180 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(225 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.625s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(270 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.75s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(315 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.875s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle>  <circle transform="rotate(180 16 16)" cx="16" cy="3" r="0">    <animate attributeName="r" values="0;3;0;0" dur="1s" repeatCount="indefinite" begin="0.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" calcMode="spline" />  </circle></svg>',
@@ -7448,7 +7808,7 @@ module.exports = {
 	fullscreen: '<svg   xmlns:dc="http://purl.org/dc/elements/1.1/"   xmlns:cc="http://creativecommons.org/ns#"   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"   xmlns:svg="http://www.w3.org/2000/svg"   xmlns="http://www.w3.org/2000/svg"   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"   version="1.1"      x="0px"   y="0px"   width="100%"   height="100%"   viewBox="5 -10 74.074074 100"   enable-background="new 0 0 100 100"   xml:space="preserve"   inkscape:version="0.48.4 r9939"   sodipodi:docname="noun_2186_cc.svg"><metadata     ><rdf:RDF><cc:Work         rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs      /><sodipodi:namedview     pagecolor="#ffffff"     bordercolor="#666666"     borderopacity="1"     objecttolerance="10"     gridtolerance="10"     guidetolerance="10"     inkscape:pageopacity="0"     inkscape:pageshadow="2"     inkscape:window-width="640"     inkscape:window-height="480"          showgrid="false"     fit-margin-top="0"     fit-margin-left="0"     fit-margin-right="0"     fit-margin-bottom="0"     inkscape:zoom="2.36"     inkscape:cx="44.101509"     inkscape:cy="31.481481"     inkscape:window-x="65"     inkscape:window-y="24"     inkscape:window-maximized="0"     inkscape:current-layer="Layer_1" /><path     d="m -7.962963,-10 v 38.889 l 16.667,-16.667 16.667,16.667 5.555,-5.555 -16.667,-16.667 16.667,-16.667 h -38.889 z"          inkscape:connector-curvature="0"     style="fill:#010101" /><path     d="m 92.037037,-10 v 38.889 l -16.667,-16.667 -16.666,16.667 -5.556,-5.555 16.666,-16.667 -16.666,-16.667 h 38.889 z"          inkscape:connector-curvature="0"     style="fill:#010101" /><path     d="M -7.962963,90 V 51.111 l 16.667,16.666 16.667,-16.666 5.555,5.556 -16.667,16.666 16.667,16.667 h -38.889 z"          inkscape:connector-curvature="0"     style="fill:#010101" /><path     d="M 92.037037,90 V 51.111 l -16.667,16.666 -16.666,-16.666 -5.556,5.556 16.666,16.666 -16.666,16.667 h 38.889 z"          inkscape:connector-curvature="0"     style="fill:#010101" /></svg>',
 	smallscreen: '<svg   xmlns:dc="http://purl.org/dc/elements/1.1/"   xmlns:cc="http://creativecommons.org/ns#"   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"   xmlns:svg="http://www.w3.org/2000/svg"   xmlns="http://www.w3.org/2000/svg"   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"   version="1.1"      x="0px"   y="0px"   width="100%"   height="100%"   viewBox="5 -10 74.074074 100"   enable-background="new 0 0 100 100"   xml:space="preserve"   inkscape:version="0.48.4 r9939"   sodipodi:docname="noun_2186_cc.svg"><metadata     ><rdf:RDF><cc:Work         rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs      /><sodipodi:namedview     pagecolor="#ffffff"     bordercolor="#666666"     borderopacity="1"     objecttolerance="10"     gridtolerance="10"     guidetolerance="10"     inkscape:pageopacity="0"     inkscape:pageshadow="2"     inkscape:window-width="1855"     inkscape:window-height="1056"          showgrid="false"     fit-margin-top="0"     fit-margin-left="0"     fit-margin-right="0"     fit-margin-bottom="0"     inkscape:zoom="2.36"     inkscape:cx="44.101509"     inkscape:cy="31.481481"     inkscape:window-x="65"     inkscape:window-y="24"     inkscape:window-maximized="1"     inkscape:current-layer="Layer_1" /><path     d="m 30.926037,28.889 0,-38.889 -16.667,16.667 -16.667,-16.667 -5.555,5.555 16.667,16.667 -16.667,16.667 38.889,0 z"          inkscape:connector-curvature="0"     style="fill:#010101" /><path     d="m 53.148037,28.889 0,-38.889 16.667,16.667 16.666,-16.667 5.556,5.555 -16.666,16.667 16.666,16.667 -38.889,0 z"          inkscape:connector-curvature="0"     style="fill:#010101" /><path     d="m 30.926037,51.111 0,38.889 -16.667,-16.666 -16.667,16.666 -5.555,-5.556 16.667,-16.666 -16.667,-16.667 38.889,0 z"          inkscape:connector-curvature="0"     style="fill:#010101" /><path     d="m 53.148037,51.111 0,38.889 16.667,-16.666 16.666,16.666 5.556,-5.556 -16.666,-16.666 16.666,-16.667 -38.889,0 z"          inkscape:connector-curvature="0"     style="fill:#010101" /></svg>',
 };
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 //make sure any console statements
 window.console = window.console || {"log":function(){}};
@@ -7469,6 +7829,7 @@ require('codemirror/addon/fold/xml-fold.js');
 require('codemirror/addon/fold/brace-fold.js');
 require('codemirror/addon/hint/show-hint.js');
 require('codemirror/addon/search/searchcursor.js');
+require('codemirror/addon/edit/closebrackets.js')
 require('codemirror/addon/edit/matchbrackets.js');
 require('codemirror/addon/runmode/runmode.js');
 require('codemirror/addon/display/fullscreen.js');
@@ -7794,9 +8155,11 @@ root.autoComplete = function(yasqe) {
 	yasqe.autocompleters.autoComplete(false);
 };
 //include the autocompleters we provide out-of-the-box
-root.registerAutocompleter("prefixes", require("./autocompleters/prefixes.js"));
+//root.registerAutocompleter("prefixes", require("./autocompleters/prefixes.js"));
+root.registerAutocompleter("sesame-prefixes", require("./autocompleters/sesame-prefixes.js"));
 root.registerAutocompleter("properties", require("./autocompleters/properties.js"));
 root.registerAutocompleter("classes", require("./autocompleters/classes.js"));
+root.registerAutocompleter("standard", require("./autocompleters/standard.js"));
 root.registerAutocompleter("variables", require("./autocompleters/variables.js"));
 
 
@@ -8143,7 +8506,7 @@ root.version = {
 	"yasgui-utils": yutils.version
 };
 
-},{"../lib/deparam.js":2,"../lib/flint.js":3,"../package.json":19,"./autocompleters/autocompleterBase.js":20,"./autocompleters/classes.js":21,"./autocompleters/prefixes.js":22,"./autocompleters/properties.js":23,"./autocompleters/variables.js":25,"./defaults.js":26,"./imgs.js":27,"./prefixUtils.js":29,"./sparql.js":30,"./tokenUtils.js":31,"./tooltip":32,"./utils.js":33,"codemirror":undefined,"codemirror/addon/display/fullscreen.js":5,"codemirror/addon/edit/matchbrackets.js":6,"codemirror/addon/fold/brace-fold.js":7,"codemirror/addon/fold/foldcode.js":8,"codemirror/addon/fold/foldgutter.js":9,"codemirror/addon/fold/xml-fold.js":10,"codemirror/addon/hint/show-hint.js":11,"codemirror/addon/runmode/runmode.js":12,"codemirror/addon/search/searchcursor.js":13,"jquery":undefined,"yasgui-utils":16}],29:[function(require,module,exports){
+},{"../lib/deparam.js":2,"../lib/flint.js":3,"../package.json":20,"./autocompleters/autocompleterBase.js":21,"./autocompleters/classes.js":22,"./autocompleters/properties.js":23,"./autocompleters/sesame-prefixes.js":24,"./autocompleters/standard.js":25,"./autocompleters/variables.js":27,"./defaults.js":28,"./imgs.js":29,"./prefixUtils.js":31,"./sparql.js":32,"./tokenUtils.js":33,"./tooltip":34,"./utils.js":35,"codemirror":undefined,"codemirror/addon/display/fullscreen.js":5,"codemirror/addon/edit/closebrackets.js":6,"codemirror/addon/edit/matchbrackets.js":7,"codemirror/addon/fold/brace-fold.js":8,"codemirror/addon/fold/foldcode.js":9,"codemirror/addon/fold/foldgutter.js":10,"codemirror/addon/fold/xml-fold.js":11,"codemirror/addon/hint/show-hint.js":12,"codemirror/addon/runmode/runmode.js":13,"codemirror/addon/search/searchcursor.js":14,"jquery":undefined,"yasgui-utils":17}],31:[function(require,module,exports){
 'use strict';
 /**
  * Append prefix declaration to list of prefixes in query window.
@@ -8281,7 +8644,7 @@ module.exports = {
 	removePrefixes: removePrefixes
 };
 
-},{}],30:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})(),
 	YASQE = require('./main.js');
@@ -8332,12 +8695,15 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 
 	
 	ajaxConfig.data = yasqe.getUrlArguments(config);
-	var countAjaxConfig = {};
-	$.extend(true, countAjaxConfig, ajaxConfig);
-	if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
-		countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
-		countAjaxConfig.complete = config.callbacks.countCallback;
+	if (window.editor.getQueryMode() != "update") {
+			var countAjaxConfig = {};
+			$.extend(true, countAjaxConfig, ajaxConfig);
+			if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
+				countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
+				countAjaxConfig.complete = config.callbacks.countCallback;
+			}
 	}
+
 
 	
 	if (config.setQueryLimit && (typeof config.setQueryLimit == "function")) {
@@ -8372,7 +8738,10 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	}
 
 	yasqe.xhr = $.ajax(ajaxConfig);
-	$.ajax(countAjaxConfig);
+	if (countAjaxConfig) {
+		$.ajax(countAjaxConfig);
+	}
+	
 };
 
 
@@ -8437,7 +8806,7 @@ var getAcceptHeader = function(yasqe, config) {
 	return acceptHeader;
 };
 
-},{"./main.js":28,"jquery":undefined}],31:[function(require,module,exports){
+},{"./main.js":30,"jquery":undefined}],33:[function(require,module,exports){
 'use strict';
 /**
  * When typing a query, this query is sometimes syntactically invalid, causing
@@ -8515,7 +8884,7 @@ module.exports = {
 };
 
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})(),
 	utils = require('./utils.js');
@@ -8553,7 +8922,7 @@ module.exports = function(yasqe, parent, html) {
 };
 
 
-},{"./utils.js":33,"jquery":undefined}],33:[function(require,module,exports){
+},{"./utils.js":35,"jquery":undefined}],35:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
 
