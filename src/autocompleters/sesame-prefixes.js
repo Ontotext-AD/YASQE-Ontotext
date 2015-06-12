@@ -16,7 +16,7 @@ module.exports = function(yasqe, completerName) {
 	return {
 		isValidCompletionPosition : function(){return module.exports.isValidCompletionPosition(yasqe);},
 		get : function(token, callback) {
-			$.get(ctx + '/repositories/' + backendRepositoryID + '/namespaces', function(data) {
+			$.get('repositories/' + backendRepositoryID + '/namespaces', function(data) {
                 if (data.results) {
                     var prefixArray = data.results.bindings.map(function(namespace) {
                         return namespace.prefix.value + ": <" + namespace.namespace.value + ">";
