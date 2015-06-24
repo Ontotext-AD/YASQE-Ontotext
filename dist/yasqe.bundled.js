@@ -14233,7 +14233,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
 
 },{}],15:[function(require,module,exports){
 /*!
- * jQuery JavaScript Library v1.11.2
+ * jQuery JavaScript Library v1.11.3
  * http://jquery.com/
  *
  * Includes Sizzle.js
@@ -14243,7 +14243,7 @@ CodeMirror.runMode = function(string, modespec, callback, options) {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-12-17T15:27Z
+ * Date: 2015-04-28T16:19Z
  */
 
 (function( global, factory ) {
@@ -14298,7 +14298,7 @@ var support = {};
 
 
 var
-	version = "1.11.2",
+	version = "1.11.3",
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -14803,7 +14803,12 @@ jQuery.each("Boolean Number String Function Array Date RegExp Object Error".spli
 });
 
 function isArraylike( obj ) {
-	var length = obj.length,
+
+	// Support: iOS 8.2 (not reproducible in simulator)
+	// `in` check used to prevent JIT error (gh-2145)
+	// hasOwn isn't used here due to false negatives
+	// regarding Nodelist length in IE
+	var length = "length" in obj && obj.length,
 		type = jQuery.type( obj );
 
 	if ( type === "function" || jQuery.isWindow( obj ) ) {
@@ -24759,7 +24764,7 @@ return jQuery;
 },{}],17:[function(require,module,exports){
 module.exports={
   "name": "yasgui-utils",
-  "version": "1.5.2",
+  "version": "1.6.0",
   "description": "Utils for YASGUI libs",
   "main": "src/main.js",
   "repository": {
@@ -24788,10 +24793,10 @@ module.exports={
   "dependencies": {
     "store": "^1.3.14"
   },
-  "_id": "yasgui-utils@1.5.2",
+  "_id": "yasgui-utils@1.6.0",
   "dist": {
-    "shasum": "c7d06928898e788ee2958969e4c2dc26f435aa64",
-    "tarball": "http://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.5.2.tgz"
+    "shasum": "bcb9091109c233e3e82737c94c202e6512389c47",
+    "tarball": "http://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.6.0.tgz"
   },
   "_from": "yasgui-utils@>=1.4.1 <2.0.0",
   "_npmVersion": "1.4.3",
@@ -24800,8 +24805,8 @@ module.exports={
     "email": "laurens.rietveld@gmail.com"
   },
   "directories": {},
-  "_shasum": "c7d06928898e788ee2958969e4c2dc26f435aa64",
-  "_resolved": "https://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.5.2.tgz",
+  "_shasum": "bcb9091109c233e3e82737c94c202e6512389c47",
+  "_resolved": "https://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.6.0.tgz",
   "readme": "ERROR: No README data found!"
 }
 
@@ -24857,8 +24862,16 @@ var root = module.exports = {
 		}
 	},
 	remove: function(key) {
-    if (!store.enabled) return;//this is probably in private mode. Don't run, as we might get Js errors
+		if (!store.enabled) return;//this is probably in private mode. Don't run, as we might get Js errors
 		if (key) store.remove(key)
+	},
+	removeAll: function(filter) {
+		if (!store.enabled) return;//this is probably in private mode. Don't run, as we might get Js errors
+		if (typeof filter === 'function') {
+			for (var key in store.getAll()) {
+				if (filter(key, root.get(key))) root.remove(key);
+			}
+		}
 	},
 	get : function(key) {
     if (!store.enabled) return null;//this is probably in private mode. Don't run, as we might get Js errors
@@ -27064,6 +27077,27 @@ module.exports = {
 'use strict';
 var $ = require('jquery'),
 	YASQE = require('./main.js');
+
+
+
+function getCookie(cname) {
+	var name = cname + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0; i<ca.length; i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1);
+		if (c.indexOf(name) == 0) return c.substring(name.length,c.length);
+	}
+	return "";
+}
+var graphDBAuth = getCookie('com.ontotext.graphdb.auth');
+if (graphDBAuth != '') {
+	$.ajaxSetup({headers: {
+		'X-AUTH-TOKEN': graphDBAuth
+	}});
+}
+
+
 YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	var callback = (typeof callbackOrConfig == "function" ? callbackOrConfig: null);
 	var config = (typeof callbackOrConfig == "object" ? callbackOrConfig : {});
