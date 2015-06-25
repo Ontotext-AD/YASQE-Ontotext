@@ -25569,18 +25569,20 @@ module.exports = function(yasqe, completerName) {
 	return {
 		isValidCompletionPosition : function(){return module.exports.isValidCompletionPosition(yasqe);},
 		get : function(token, callback) {
-			$.get('repositories/' + backendRepositoryID + '/namespaces', function(data) {
-                if (data.results) {
-                    var prefixArray = data.results.bindings.map(function(namespace) {
-                        return namespace.prefix.value + ": <" + namespace.namespace.value + ">";
-                    });
-                    prefixArray.sort();
-                    callback(prefixArray);
-                }
-                //TODO: What to do on error here
-			},
-            'json'
-            );
+			if (backendRepositoryID != '') {
+				$.get('repositories/' + backendRepositoryID + '/namespaces', function(data) {
+						if (data.results) {
+							var prefixArray = data.results.bindings.map(function(namespace) {
+								return namespace.prefix.value + ": <" + namespace.namespace.value + ">";
+							});
+							prefixArray.sort();
+							callback(prefixArray);
+						}
+						//TODO: What to do on error here
+					},
+					'json'
+				);
+			}
 		},
 		preProcessToken: function(token) {return module.exports.preprocessPrefixTokenForCompletion(yasqe, token)},
 		async : true,
