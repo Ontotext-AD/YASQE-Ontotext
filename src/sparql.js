@@ -2,27 +2,26 @@
 var $ = require('jquery'),
 	YASQE = require('./main.js');
 
-
-
-function getCookie(cname) {
-	var name = cname + "=";
-	var ca = document.cookie.split(';');
-	for(var i=0; i<ca.length; i++) {
-		var c = ca[i];
-		while (c.charAt(0)==' ') c = c.substring(1);
-		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length,c.length));
-	}
-	return "";
-}
-var graphDBAuth = getCookie('com.ontotext.graphdb.auth');
-if (graphDBAuth != '') {
-	$.ajaxSetup({headers: {
-		'X-AUTH-TOKEN': graphDBAuth
-	}});
-}
-
-
 YASQE.executeQuery = function(yasqe, callbackOrConfig) {
+
+	function getCookie(cname) {
+		var name = cname + "=";
+		var ca = document.cookie.split(';');
+		for(var i=0; i<ca.length; i++) {
+			var c = ca[i];
+			while (c.charAt(0)==' ') c = c.substring(1);
+			if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length,c.length));
+		}
+		return "";
+	}
+
+	var graphDBAuth = getCookie('com.ontotext.graphdb.auth');
+	if (graphDBAuth != '') {
+		$.ajaxSetup({headers: {
+			'X-AUTH-TOKEN': graphDBAuth
+		}});
+	}
+
 	var callback = (typeof callbackOrConfig == "function" ? callbackOrConfig: null);
 	var config = (typeof callbackOrConfig == "object" ? callbackOrConfig : {});
 	

@@ -6,6 +6,17 @@ var tokenTypes = {
 	"atom": "var"
 };
 
+function getCookie(cname) {
+	var name = cname + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0; i<ca.length; i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1);
+		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length,c.length));
+	}
+	return "";
+}
+
 module.exports = function(yasqe, completerName) {
 	//this autocompleter also fires on-change!
 	yasqe.on("change", function() {
@@ -17,6 +28,13 @@ module.exports = function(yasqe, completerName) {
 		isValidCompletionPosition : function(){return module.exports.isValidCompletionPosition(yasqe);},
 		get : function(token, callback) {
 			if (backendRepositoryID != '') {
+				var graphDBAuth = getCookie('com.ontotext.graphdb.auth');
+				if (graphDBAuth != '') {
+					$.ajaxSetup({headers: {
+						'X-AUTH-TOKEN': graphDBAuth
+					}});
+				}
+
 				$.get('repositories/' + backendRepositoryID + '/namespaces', function(data) {
 						if (data.results) {
 							var prefixArray = data.results.bindings.map(function(namespace) {
