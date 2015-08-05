@@ -15,7 +15,12 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 		return "";
 	}
 
-	var graphDBAuth = getCookie('com.ontotext.graphdb.auth');
+	// TODO: find a way to get this from the security module in angular
+	var port = window.location.port;
+	if (!port) {
+		port = "80";
+	}
+	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
 	if (graphDBAuth != '') {
 		$.ajaxSetup({headers: {
 			'X-AUTH-TOKEN': graphDBAuth

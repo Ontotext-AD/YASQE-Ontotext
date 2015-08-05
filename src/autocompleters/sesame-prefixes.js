@@ -28,7 +28,12 @@ module.exports = function(yasqe, completerName) {
 		isValidCompletionPosition : function(){return module.exports.isValidCompletionPosition(yasqe);},
 		get : function(token, callback) {
 			if (backendRepositoryID != '') {
-				var graphDBAuth = getCookie('com.ontotext.graphdb.auth');
+				// TODO: find a way to get this from the security module in angular
+				var port = window.location.port;
+				if (!port) {
+					port = "80";
+				}
+				var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
 				if (graphDBAuth != '') {
 					$.ajaxSetup({headers: {
 						'X-AUTH-TOKEN': graphDBAuth
@@ -37,9 +42,17 @@ module.exports = function(yasqe, completerName) {
 
 				$.get('repositories/' + backendRepositoryID + '/namespaces', function(data) {
 						if (data.results) {
+							var hasOnto = false;
 							var prefixArray = data.results.bindings.map(function(namespace) {
+								if (namespace.prefix.value === 'onto') {
+									hasOnto = true;
+								}
 								return namespace.prefix.value + ": <" + namespace.namespace.value + ">";
 							});
+							if (!hasOnto) {
+								prefixArray.push("onto: <http://www.ontotext.com/>");
+							}
+							
 							prefixArray.sort();
 							callback(prefixArray);
 						}
