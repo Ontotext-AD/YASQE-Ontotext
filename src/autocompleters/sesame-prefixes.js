@@ -31,7 +31,12 @@ module.exports = function(yasqe, completerName) {
 				// TODO: find a way to get this from the security module in angular
 				var port = window.location.port;
 				if (!port) {
-					port = "80";
+					if(window.location.protocol == 'https:'){
+						port = "443";
+					}
+					else{
+						port = "80";
+					}
 				}
 				var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
 				if (graphDBAuth != '') {
