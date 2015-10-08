@@ -114,7 +114,7 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	};
 
 	var executeCount = function(event, jqXHR, ajaxOptions) {
-		window.editor && $.ajax(countAjaxConfig);
+		window.editor && 200 === event.status && $.ajax(countAjaxConfig);
 	}
 	//Make sure the query button is updated again on complete
 	if (ajaxConfig.complete) {
