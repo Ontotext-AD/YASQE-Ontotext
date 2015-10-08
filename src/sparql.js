@@ -112,11 +112,15 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 	var updateQueryButton = function() {
 		YASQE.updateQueryButton(yasqe);
 	};
+
+	var executeCount = function(event, jqXHR, ajaxOptions) {
+		window.editor && $.ajax(countAjaxConfig);
+	}
 	//Make sure the query button is updated again on complete
 	if (ajaxConfig.complete) {
-		ajaxConfig.complete = [updateQueryButton, ajaxConfig.complete, function() {$.ajax(countAjaxConfig)}];
+		ajaxConfig.complete = [updateQueryButton, ajaxConfig.complete, executeCount];
 	} else {
-		ajaxConfig.complete = [updateQueryButton, function() {$.ajax(countAjaxConfig)}];
+		ajaxConfig.complete = [updateQueryButton, executeCount];
 	}
 
 	if (config.callbacks.resetResults && (typeof config.callbacks.resetResults == "function")) {
