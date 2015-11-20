@@ -50,6 +50,40 @@ var postprocessResourceTokenForCompletion = function(yasqe, token, suggestedStri
 	return suggestedString;
 };
 
+function getCookie(cname) {
+	var name = cname + "=";
+	var ca = document.cookie.split(';');
+	for(var i=0; i<ca.length; i++) {
+		var c = ca[i];
+		while (c.charAt(0)==' ') c = c.substring(1);
+		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length,c.length));
+	}
+	return "";
+}
+
+
+var setupHeaders = function(backendRepositoryID) {
+	var port = window.location.port;
+	if (!port) {
+		if(window.location.protocol == 'https:'){
+			port = "443";
+		}
+		else{
+			port = "80";
+		}
+	}
+	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
+	if (graphDBAuth != '') {
+		var headers = {
+			'X-AUTH-TOKEN': graphDBAuth
+		};
+		if (backendRepositoryID) {
+			headers['X-GraphDB-Repository'] = backendRepositoryID;
+		}
+		$.ajaxSetup({headers: headers});
+	}
+}
+
 var fetchFromLov = function(yasqe, completer, token, callback) {
 	if (!token || !token.string || token.string.trim().length == 0) {
 		yasqe.autocompleters.notifications.getEl(completer)
@@ -126,4 +160,5 @@ module.exports = {
 	fetchFromLov: fetchFromLov,
 	preprocessResourceTokenForCompletion: preprocessResourceTokenForCompletion,
 	postprocessResourceTokenForCompletion: postprocessResourceTokenForCompletion,
+	setupHeaders: setupHeaders,
 };

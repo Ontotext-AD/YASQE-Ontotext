@@ -1,21 +1,11 @@
 'use strict';
 var $ = require('jquery');
+var utils = require('./utils');
 //this is a mapping from the class names (generic ones, for compatability with codemirror themes), to what they -actually- represent
 var tokenTypes = {
 	"string-2" : "prefixed",
 	"atom": "var"
 };
-
-function getCookie(cname) {
-	var name = cname + "=";
-	var ca = document.cookie.split(';');
-	for(var i=0; i<ca.length; i++) {
-		var c = ca[i];
-		while (c.charAt(0)==' ') c = c.substring(1);
-		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length,c.length));
-	}
-	return "";
-}
 
 module.exports = function(yasqe, completerName) {
 	//this autocompleter also fires on-change!
@@ -29,22 +19,7 @@ module.exports = function(yasqe, completerName) {
 		get : function(token, callback) {
 			if (backendRepositoryID != '') {
 				// TODO: find a way to get this from the security module in angular
-				var port = window.location.port;
-				if (!port) {
-					if(window.location.protocol == 'https:'){
-						port = "443";
-					}
-					else{
-						port = "80";
-					}
-				}
-				var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
-				if (graphDBAuth != '') {
-					$.ajaxSetup({headers: {
-						'X-AUTH-TOKEN': graphDBAuth
-					}});
-				}
-
+				utils.setupHeaders();
 				$.get('repositories/' + backendRepositoryID + '/namespaces', function(data) {
 						if (data.results) {
 							var hasOnto = false;
