@@ -180,6 +180,9 @@ module.exports = function(YASQE, yasqe) {
 		}
 	};
 	
+	var replaceAll = function(str, find, replace) {
+	  return str.replace(new RegExp(find, 'g'), replace);
+	}
 
 	/**
 	 *  get our array of suggestions (strings) in the codemirror hint format
@@ -191,10 +194,18 @@ module.exports = function(YASQE, yasqe) {
 			if (completer.postProcessToken) {
 				suggestedString = completer.postProcessToken(token, suggestedString);
 			}
+
+			var displayTextVar = replaceAll(replaceAll(suggestedString, "<", "&lt;"), ">", "&gt;");
+			displayTextVar = replaceAll(replaceAll(displayTextVar, "&lt;b&gt;", "<span class='CodeMirror-highlight'>"), "&lt;/b&gt;", "</span>");
+
+			
 			hintList.push({
-				text : suggestedString,
-				displayText : suggestedString,
+				text : replaceAll(replaceAll(suggestedString, "<b>", ""), "</b>", ""),
+				displayText : displayTextVar,
 				hint : selectHint,
+				render: function(elt, data, cur) {
+					$(elt).append(cur.displayText);
+				}
 			});
 		}
 		
