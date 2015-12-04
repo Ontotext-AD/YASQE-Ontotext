@@ -45,7 +45,15 @@ var postprocessResourceTokenForCompletion = function(yasqe, token, suggestedStri
 		suggestedString = token.tokenPrefix + suggestedString.substring(token.tokenPrefixUri.length);
 	} else {
 		// it is a regular uri. add '<' and '>' to string
-		suggestedString = "<" + suggestedString + ">";
+		var queryPrefixes = yasqe.getPrefixesFromQuery();
+		var existingPrefix = _.filter(_.values(queryPrefixes), function(f) {return suggestedString.startsWith(f);});
+		if (existingPrefix.length > 0) {
+			var prefixFound = _.findKey(queryPrefixes, function(val) {return val === existingPrefix[0]});
+			suggestedString =  prefixFound + ":" + suggestedString.substring(queryPrefixes[prefixFound].length);
+		} else {
+			suggestedString = "<" + suggestedString + ">";
+		}
+		
 	}
 	return suggestedString;
 };
