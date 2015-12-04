@@ -35,8 +35,13 @@ module.exports.fetchAutocomplete = function(yasqe, token, callback) {
 		}
 	}
 	utils.setupHeaders(backendRepositoryID);
-	$.get('rest/autocomplete/query', {q: query}, function(data) {
-		callback(data);
+	$.get('rest/autocomplete/query', {q: query}, function(data, textStatus, jqXHR) {
+		if (204 == jqXHR.status) {
+			yasqe.toastBuildIndex();
+		} else {
+			callback(data);
+		}
+		
 	},'json');
 }
 
