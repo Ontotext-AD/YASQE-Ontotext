@@ -80,16 +80,15 @@ var setupHeaders = function(backendRepositoryID) {
 			port = "80";
 		}
 	}
+	var headers = {};
 	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
 	if (graphDBAuth != '') {
-		var headers = {
-			'X-AUTH-TOKEN': graphDBAuth
-		};
-		if (backendRepositoryID) {
-			headers['X-GraphDB-Repository'] = backendRepositoryID;
-		}
-		$.ajaxSetup({headers: headers});
+		headers['X-AUTH-TOKEN'] = graphDBAuth
 	}
+	if (backendRepositoryID) {
+		headers['X-GraphDB-Repository'] = backendRepositoryID;
+	}
+	$.ajaxSetup({headers: headers});
 }
 
 var fetchFromLov = function(yasqe, completer, token, callback) {
