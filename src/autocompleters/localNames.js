@@ -42,7 +42,9 @@ module.exports.fetchAutocomplete = function(yasqe, token, callback) {
 			callback(data);
 		}
 		
-	},'json');
+	},'json').fail(function(data) {
+		yasqe.toastError(data);
+	});
 }
 
 module.exports.isValidCompletionPosition = function(yasqe) {

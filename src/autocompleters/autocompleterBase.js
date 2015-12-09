@@ -195,7 +195,9 @@ module.exports = function(YASQE, yasqe) {
 				suggestedString = completer.postProcessToken(token, suggestedString);
 			}
 
-			var displayTextVar = replaceAll(replaceAll(suggestedString, "<", "&lt;"), ">", "&gt;");
+			var displayTextVar = decodeURIComponent(suggestedString);
+
+			displayTextVar = replaceAll(replaceAll(displayTextVar, "<", "&lt;"), ">", "&gt;");
 			displayTextVar = replaceAll(replaceAll(displayTextVar, "&lt;b&gt;", "<span class='CodeMirror-highlight'>"), "&lt;/b&gt;", "</span>");
 
 			
