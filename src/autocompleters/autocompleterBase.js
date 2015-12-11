@@ -186,12 +186,16 @@ module.exports = function(YASQE, yasqe) {
 
 
 	var encodeForSparql = function(str) {
+		if (str.trim().startsWith("<") && str.trim().endsWith(">")) {
+			return str;
+		}
 		str = encodeURIComponent(str);
 		str = replaceAll(str, "[*]", "%2a");
 		str = replaceAll(str, "[!]", "%21");
 		str = replaceAll(str, "[(]", "%28");
 		str = replaceAll(str, "[)]", "%29");
 		str = replaceAll(str, "[~]", "%7e");
+		str = replaceAll(str, "[']", "%27");
 		return str;
 	}
 
