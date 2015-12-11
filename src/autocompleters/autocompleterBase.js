@@ -184,6 +184,17 @@ module.exports = function(YASQE, yasqe) {
 	  return str.replace(new RegExp(find, 'g'), replace);
 	}
 
+
+	var encodeForSparql = function(str) {
+		str = encodeURIComponent(str);
+		str = replaceAll(str, "[*]", "%2a");
+		str = replaceAll(str, "[!]", "%21");
+		str = replaceAll(str, "[(]", "%28");
+		str = replaceAll(str, "[)]", "%29");
+		str = replaceAll(str, "[~]", "%7e");
+		return str;
+	}
+
 	/**
 	 *  get our array of suggestions (strings) in the codemirror hint format
 	 */
@@ -191,18 +202,21 @@ module.exports = function(YASQE, yasqe) {
 		var hintList = [];
 		for (var i = 0; i < suggestions.length; i++) {
 			var suggestedString = suggestions[i];
+			
 			if (completer.postProcessToken) {
 				suggestedString = completer.postProcessToken(token, suggestedString);
 			}
 
-			var displayTextVar = decodeURIComponent(suggestedString);
-
-			displayTextVar = replaceAll(replaceAll(displayTextVar, "<", "&lt;"), ">", "&gt;");
+			var displayTextVar = replaceAll(replaceAll(suggestedString, "<", "&lt;"), ">", "&gt;");
 			displayTextVar = replaceAll(replaceAll(displayTextVar, "&lt;b&gt;", "<span class='CodeMirror-highlight'>"), "&lt;/b&gt;", "</span>");
-
+			suggestedString = replaceAll(replaceAll(suggestedString, "<b>", ""), "</b>", "");
+			if (!(suggestedString.startsWith("<") && suggestedString.endsWith(">")) && suggestedString.indexOf(":") > 0) {
+				var prefixSplit = suggestedString.indexOf(":");
+				suggestedString = suggestedString.substring(0, prefixSplit + 1) + encodeForSparql(suggestedString.substring(prefixSplit + 1));
+			}
 			
 			hintList.push({
-				text : replaceAll(replaceAll(suggestedString, "<b>", ""), "</b>", ""),
+				text : suggestedString,
 				displayText : displayTextVar,
 				hint : selectHint,
 				render: function(elt, data, cur) {
@@ -214,7 +228,7 @@ module.exports = function(YASQE, yasqe) {
 		var cur = yasqe.getCursor();
 		var returnObj = {
 			completionToken : token.string,
-			list : hintList,
+			list : hintList,	
 			from : {
 				line : cur.line,
 				ch : token.start
