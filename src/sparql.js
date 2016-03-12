@@ -85,7 +85,7 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 				countAjaxConfig.data = countAjaxConfig.data.filter(function(o) {
 					return o.name != 'offset' && o.name != 'limit';
 				});
-				countAjaxConfig.data.push({name: 'default-graph-uri', value: 'http://www.ontotext.com/count'});
+				countAjaxConfig.data.push({name: 'count', value: '1'});
 				countAjaxConfig.complete = config.callbacks.countCallback;
 			}
 	}
