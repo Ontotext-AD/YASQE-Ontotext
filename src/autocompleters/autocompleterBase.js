@@ -265,7 +265,7 @@ module.exports = function(YASQE, yasqe) {
 					if (!completionNotifications[completer.name]) completionNotifications[completer.name] = $("<div class='completionNotification'></div>");
 					completionNotifications[completer.name]
 						.show()
-						.text("Press " + (navigator.userAgent.indexOf('Mac OS X') != -1? "CMD": "CTRL") + " - <spacebar> to autocomplete")
+						.text("Press Alt+Enter to autocomplete")
 						.appendTo($(yasqe.getWrapperElement()));
 				}
 			},

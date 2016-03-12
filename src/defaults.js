@@ -33,11 +33,8 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 		 * @type object
 		 */
 		extraKeys : {
-//					"Ctrl-Space" : function(yasqe) {
-//						YASQE.autoComplete(yasqe);
-//					},
+			"Alt-Enter" : YASQE.autoComplete,
 			"Ctrl-Space" : YASQE.autoComplete,
-			
 			"Cmd-Space" : YASQE.autoComplete,
 			"Ctrl-D" : YASQE.deleteLine,
 			"Ctrl-K" : YASQE.deleteLine,
