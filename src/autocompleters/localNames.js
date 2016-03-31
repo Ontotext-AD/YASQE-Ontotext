@@ -11,7 +11,7 @@ module.exports = function(yasqe, name) {
 		postProcessToken: function(token, suggestedString) {return module.exports.postProcessToken(yasqe, token, suggestedString);},
 		async : true,
 		bulk : false,
-		autoShow : false,
+		autoShow : true,
 		persistent : name,
 		callbacks : {
 			validPosition : yasqe.autocompleters.notifications.show,
@@ -48,7 +48,17 @@ module.exports.fetchAutocomplete = function(yasqe, token, callback) {
 }
 
 module.exports.isValidCompletionPosition = function(yasqe) {
+	var cur = yasqe.getCursor(), currToken = yasqe.getTokenAt(cur);
+	// Do not autocomplete local names in prefix lines
+	if (yasqe.getLine(cur.line).toUpperCase().trim().indexOf('PREFIX') == 0) {
+		return false;
+	}
+
 	var token = yasqe.getCompleteToken();
+
+	if ($.inArray("IRI_REF", token.state.possibleCurrent) == -1)
+		return false;
+	
 	if (token.string.length == 0) 
 		return false; //we want -something- to autocomplete
 	if (token.string.indexOf("?") == 0)

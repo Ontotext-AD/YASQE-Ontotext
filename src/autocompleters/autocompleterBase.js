@@ -91,8 +91,9 @@ module.exports = function(YASQE, yasqe) {
 			return;
 		var tryHintType = function(completer) {
 			if (fromAutoShow // from autoShow, i.e. this gets called each time the editor content changes
-					&& (!completer.autoShow // autoshow for  this particular type of autocompletion is -not- enabled
-					|| (!completer.bulk && completer.async)) // async is enabled (don't want to re-do ajax-like request for every editor change)
+					&& (!completer.autoShow) // autoshow for  this particular type of autocompletion is -not- enabled
+					// Comment this, we want to do ajax request for autoShow for localNames autocompletion
+					// || (!completer.bulk && completer.async)) // async is enabled (don't want to re-do ajax-like request for every editor change)
 			) {
 				return false;
 			}
