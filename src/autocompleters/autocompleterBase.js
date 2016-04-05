@@ -8,11 +8,21 @@ module.exports = function(YASQE, yasqe) {
 	var completionNotifications = {};
 	var completers = {};
 	var tries = {};
+	// introduce a flag to not trigger continuous completion always
+	var completionTriggeredFlag = false;
 	
 	yasqe.on('cursorActivity', function(yasqe, eventInfo) {
 		autoComplete(true);
 	});
-	yasqe.on('change', function() {
+	yasqe.on('keyHandled', function(yasqe, name, ev) {
+		if (name === 'Esc') {
+			completionTriggeredFlag = false;
+		}
+	});
+	yasqe.on('change', function(yasqe, ev) {
+		if (" " == ev.text) {
+			completionTriggeredFlag = false;
+		}
 		var needPossibleAdjustment = [];
 		for (var notificationName in completionNotifications) {
 			if (completionNotifications[notificationName].is(':visible')) {
@@ -90,12 +100,18 @@ module.exports = function(YASQE, yasqe) {
 		if (yasqe.somethingSelected())
 			return;
 		var tryHintType = function(completer) {
+			if (fromAutoShow && !completionTriggeredFlag) {
+				return false;
+			}
 			if (fromAutoShow // from autoShow, i.e. this gets called each time the editor content changes
 					&& (!completer.autoShow) // autoshow for  this particular type of autocompletion is -not- enabled
 					// Comment this, we want to do ajax request for autoShow for localNames autocompletion
 					// || (!completer.bulk && completer.async)) // async is enabled (don't want to re-do ajax-like request for every editor change)
 			) {
 				return false;
+			}
+			if (!fromAutoShow) {
+				completionTriggeredFlag = true;
 			}
 
 			var hintConfig = {
@@ -223,7 +239,11 @@ module.exports = function(YASQE, yasqe) {
 			hintList.push({
 				text : suggestedString,
 				displayText : displayTextVar,
-				hint : selectHint,
+				hint : function(yasqe, data, completion) {
+					completionTriggeredFlag = false;
+					selectHint(yasqe, data, completion);
+
+				},
 				render: function(elt, data, cur) {
 					$(elt).append(cur.displayText);
 				}
