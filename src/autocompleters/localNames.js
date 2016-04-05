@@ -36,7 +36,7 @@ module.exports.fetchAutocomplete = function(yasqe, token, callback) {
 	}
 	utils.setupHeaders(backendRepositoryID);
 	$.get('rest/autocomplete/query', {q: query}, function(data, textStatus, jqXHR) {
-		if (204 == jqXHR.status) {
+		if (204 == jqXHR.status && !yasqe.fromAutoShow) {
 			yasqe.toastBuildIndex();
 		} else {
 			callback(data);

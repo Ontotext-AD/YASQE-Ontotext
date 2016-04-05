@@ -99,6 +99,7 @@ module.exports = function(YASQE, yasqe) {
 	var autoComplete = function(fromAutoShow) {
 		if (yasqe.somethingSelected())
 			return;
+		yasqe.fromAutoShow = fromAutoShow;
 		var tryHintType = function(completer) {
 			if (fromAutoShow && !completionTriggeredFlag) {
 				return false;
