@@ -34,6 +34,9 @@ module.exports.fetchAutocomplete = function(yasqe, token, callback) {
 			query = token.autocompletionString;
 		}
 	}
+	if (backendRepositoryID === 'SYSTEM') {
+		return;
+	}
 	utils.setupHeaders(backendRepositoryID);
 	$.get('rest/autocomplete/query', {q: query}, function(data, textStatus, jqXHR) {
 		if (204 == jqXHR.status && !yasqe.fromAutoShow) {
@@ -43,7 +46,9 @@ module.exports.fetchAutocomplete = function(yasqe, token, callback) {
 		}
 		
 	},'json').fail(function(data) {
-		yasqe.toastError(data);
+		if (!yasqe.fromAutoShow) {
+			yasqe.toastError(data);
+		}
 	});
 }
 
