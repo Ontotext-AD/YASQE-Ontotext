@@ -12,7 +12,7 @@ var $ = require('jquery'),
  * Converts rdf:type to http://.../type and converts <http://...> to http://...
  * Stores additional info such as the used namespace and prefix in the token object
  */
-var preprocessResourceTokenForCompletion = function(yasqe, token) {
+var preprocessResourceTokenForCompletion = function (yasqe, token) {
 	var queryPrefixes = yasqe.getPrefixesFromQuery();
 	if (!token.string.indexOf("<") == 0) {
 		token.tokenPrefix = token.string.substring(0, token.string.indexOf(":") + 1);
@@ -39,20 +39,60 @@ var preprocessResourceTokenForCompletion = function(yasqe, token) {
 	return token;
 };
 
-var postprocessResourceTokenForCompletion = function(yasqe, token, suggestedString) {
+var postprocessResourceTokenForCompletion = function (yasqe, token, suggestedString) {
 	if (token.tokenPrefix && token.autocompletionString && token.tokenPrefixUri) {
 		// we need to get the suggested string back to prefixed form
 		suggestedString = token.tokenPrefix + suggestedString.substring(token.tokenPrefixUri.length);
 	} else {
 		// it is a regular uri. add '<' and '>' to string
-		suggestedString = "<" + suggestedString + ">";
+		var queryPrefixes = yasqe.getPrefixesFromQuery();
+		var existingPrefix = _.filter(_.values(queryPrefixes), function (f) { return suggestedString.startsWith(f); });
+		if (existingPrefix.length > 0) {
+			var prefixFound = _.findKey(queryPrefixes, function (val) { return val === existingPrefix[0]; });
+			suggestedString = prefixFound + ":" + suggestedString.substring(queryPrefixes[prefixFound].length);
+		} else {
+			suggestedString = "<" + suggestedString + ">";
+		}
 	}
 	return suggestedString;
 };
 
+function getCookie(cname) {
+	var name = cname + "=";
+	var ca = document.cookie.split(';');
+	for (var i = 0; i < ca.length; i++) {
+		var c = ca[i];
+		while (c.charAt(0) == ' ') c = c.substring(1);
+		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length, c.length));
+	}
+	return "";
+}
+
+
+var setupHeaders = function (backendRepositoryID) {
+	var port = window.location.port;
+	if (!port) {
+		if (window.location.protocol == 'https:') {
+			port = "443";
+		}
+		else {
+			port = "80";
+		}
+	}
+	var headers = {};
+	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
+	if (graphDBAuth != '') {
+		headers['X-AUTH-TOKEN'] = graphDBAuth;
+	}
+	if (backendRepositoryID) {
+		headers['X-GraphDB-Repository'] = backendRepositoryID;
+	}
+	$.ajaxSetup({ headers: headers });
+};
+
 //Use protocol relative request when served via http[s]*. Otherwise (e.g. file://, fetch via http)
-var reqProtocol = (window.location.protocol.indexOf('http') === 0? '//': 'http://')
-var fetchFromLov = function(yasqe, completer, token, callback) {
+var reqProtocol = (window.location.protocol.indexOf('http') === 0 ? '//' : 'http://');
+var fetchFromLov = function (yasqe, completer, token, callback) {
 	if (!token || !token.string || token.string.trim().length == 0) {
 		yasqe.autocompleters.notifications.getEl(completer)
 			.empty()
@@ -72,18 +112,18 @@ var fetchFromLov = function(yasqe, completer, token, callback) {
 	}
 	var results = [];
 	var url = "";
-	var updateUrl = function() {
+	var updateUrl = function () {
 		url = reqProtocol + "lov.okfn.org/dataset/lov/api/v2/autocomplete/terms?" + $.param(args);
 	};
 	updateUrl();
-	var increasePage = function() {
+	var increasePage = function () {
 		args.page++;
 		updateUrl();
 	};
-	var doRequests = function() {
+	var doRequests = function () {
 		$.get(
 			url,
-			function(data) {
+			function (data) {
 				for (var i = 0; i < data.results.length; i++) {
 					if ($.isArray(data.results[i].uri) && data.results[i].uri.length > 0) {
 						results.push(data.results[i].uri[0]);
@@ -98,19 +138,19 @@ var fetchFromLov = function(yasqe, completer, token, callback) {
 				} else {
 					//if notification bar is there, show feedback, or close
 					if (results.length > 0) {
-						yasqe.autocompleters.notifications.hide(yasqe, completer)
+						yasqe.autocompleters.notifications.hide(yasqe, completer);
 					} else {
 						yasqe.autocompleters.notifications.getEl(completer).text("0 matches found...");
 					}
 					callback(results);
 					// requests done! Don't call this function again
 				}
-			}).fail(function(jqXHR, textStatus, errorThrown) {
-			yasqe.autocompleters.notifications.getEl(completer)
-				.empty()
-				.append("Failed fetching suggestions..");
+			}).fail(function (jqXHR, textStatus, errorThrown) {
+				yasqe.autocompleters.notifications.getEl(completer)
+					.empty()
+					.append("Failed fetching suggestions..");
 
-		});
+			});
 	};
 	//if notification bar is there, show a loader
 	yasqe.autocompleters.notifications.getEl(completer)

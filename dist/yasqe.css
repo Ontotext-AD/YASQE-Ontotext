@@ -463,11 +463,6 @@
       height: 20px; }
     .yasqe .fullscreenToggleBtns .yasqe_smallscreenBtn {
       display: none; }
-  .yasqe .CodeMirror {
-    line-height: 1.5em;
-    border: 1px solid #d1d1d1; }
-  .yasqe pre {
-    font-size: 13px; }
   .yasqe span.cm-error {
     border-bottom: 2px dotted red; }
   .yasqe .gutterErrorBar {
@@ -568,4 +563,4 @@ li.CodeMirror-hint-active {
   color: white; }
 
 .CodeMirror-hint {
-  max-width: 30em; }
+  max-width: 100em; }

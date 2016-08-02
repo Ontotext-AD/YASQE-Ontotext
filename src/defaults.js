@@ -16,6 +16,7 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 		showToken: /\w/
 	},
 	tabMode: "indent",
+	autoCloseBrackets: true,
 	lineNumbers: true,
 	lineWrapping: true,
 	backdrop: false,
@@ -34,11 +35,8 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 	 * @type object
 	 */
 	extraKeys: {
-		//					"Ctrl-Space" : function(yasqe) {
-		//						YASQE.autoComplete(yasqe);
-		//					},
+		"Alt-Enter": YASQE.autoComplete,
 		"Ctrl-Space": YASQE.autoComplete,
-
 		"Cmd-Space": YASQE.autoComplete,
 		"Ctrl-D": YASQE.deleteLine,
 		"Ctrl-K": YASQE.deleteLine,
@@ -60,10 +58,10 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 		"Cmd-S": YASQE.storeQuery,
 		"Ctrl-Enter": YASQE.executeQuery,
 		"Cmd-Enter": YASQE.executeQuery,
-		"F11": function(yasqe) {
+		"F11": function (yasqe) {
 			yasqe.setOption("fullScreen", !yasqe.getOption("fullScreen"));
 		},
-		"Esc": function(yasqe) {
+		"Esc": function (yasqe) {
 			if (yasqe.getOption("fullScreen")) yasqe.setOption("fullScreen", false);
 		}
 	},
@@ -97,7 +95,7 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 	 *
 	 * @type function|string
 	 */
-	persistent: function(yasqe) {
+	persistent: function (yasqe) {
 		return "yasqe_" + $(yasqe.getWrapperElement()).closest('[id]').attr('id') + "_queryVal";
 	},
 
@@ -106,7 +104,7 @@ YASQE.defaults = $.extend(true, {}, YASQE.defaults, {
 	 * Settings for querying sparql endpoints
 	 */
 	sparql: {
-		queryName: function(yasqe) {return yasqe.getQueryMode()},
+		queryName: function (yasqe) { return yasqe.getQueryMode() },
 		showQueryButton: false,
 
 		/**f

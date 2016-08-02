@@ -1,7 +1,7 @@
 'use strict';
 //make sure any console statements
 window.console = window.console || {
-	"log": function() {}
+	"log": function () { }
 };
 
 /**
@@ -25,6 +25,7 @@ require('codemirror/addon/edit/matchbrackets.js');
 require('codemirror/addon/runmode/runmode.js');
 require('codemirror/addon/display/fullscreen.js');
 require('../lib/grammar/tokenizer.js');
+require('codemirror/addon/edit/closebrackets.js');
 
 
 
@@ -37,7 +38,7 @@ require('../lib/grammar/tokenizer.js');
  * @class YASQE
  * @return {doc} YASQE document
  */
-var root = module.exports = function(parent, config) {
+var root = module.exports = function (parent, config) {
 	var rootEl = $("<div>", {
 		class: 'yasqe'
 	}).appendTo($(parent));
@@ -57,7 +58,7 @@ var root = module.exports = function(parent, config) {
  *
  * @private
  */
-var extendConfig = function(config) {
+var extendConfig = function (config) {
 	var extendedConfig = $.extend(true, {}, root.defaults, config);
 
 	// I know, codemirror deals with  default options as well.
@@ -72,31 +73,31 @@ var extendConfig = function(config) {
  *
  * @private
  */
-var extendCmInstance = function(yasqe) {
+var extendCmInstance = function (yasqe) {
 	//instantiate autocompleters
 	yasqe.autocompleters = require('./autocompleters/autocompleterBase.js')(root, yasqe);
 	if (yasqe.options.autocompleters) {
-		yasqe.options.autocompleters.forEach(function(name) {
+		yasqe.options.autocompleters.forEach(function (name) {
 			if (root.Autocompleters[name]) yasqe.autocompleters.init(name, root.Autocompleters[name]);
 		})
 	}
 	yasqe.lastQueryDuration = null;
-	yasqe.getCompleteToken = function(token, cur) {
+	yasqe.getCompleteToken = function (token, cur) {
 		return require('./tokenUtils.js').getCompleteToken(yasqe, token, cur);
 	};
-	yasqe.getPreviousNonWsToken = function(line, token) {
+	yasqe.getPreviousNonWsToken = function (line, token) {
 		return require('./tokenUtils.js').getPreviousNonWsToken(yasqe, line, token);
 	};
-	yasqe.getNextNonWsToken = function(lineNumber, charNumber) {
+	yasqe.getNextNonWsToken = function (lineNumber, charNumber) {
 		return require('./tokenUtils.js').getNextNonWsToken(yasqe, lineNumber, charNumber);
 	};
-	yasqe.collapsePrefixes = function(collapse) {
+	yasqe.collapsePrefixes = function (collapse) {
 		if (collapse === undefined) collapse = true;
 		yasqe.foldCode(require('./prefixFold.js').findFirstPrefixLine(yasqe), root.fold.prefix, (collapse ? "fold" : "unfold"));
 	};
 	var backdrop = null;
 	var animateSpeed = null;
-	yasqe.setBackdrop = function(show) {
+	yasqe.setBackdrop = function (show) {
 
 
 		if (yasqe.options.backdrop || yasqe.options.backdrop === 0 || yasqe.options.backdrop === '0') {
@@ -111,9 +112,9 @@ var extendCmInstance = function(yasqe) {
 
 			if (!backdrop) {
 				backdrop = $('<div>', {
-						class: 'backdrop'
-					})
-					.click(function() {
+					class: 'backdrop'
+				})
+					.click(function () {
 						$(this).hide();
 					})
 					.insertAfter($(yasqe.getWrapperElement()));
@@ -134,11 +135,11 @@ var extendCmInstance = function(yasqe) {
 	 * @method doc.query
 	 * @param function|object
 	 */
-	yasqe.query = function(callbackOrConfig) {
+	yasqe.query = function (callbackOrConfig) {
 		root.executeQuery(yasqe, callbackOrConfig);
 	};
 
-	yasqe.getUrlArguments = function(config) {
+	yasqe.getUrlArguments = function (config) {
 		return root.getUrlArguments(yasqe, config);
 	};
 
@@ -148,20 +149,20 @@ var extendCmInstance = function(yasqe) {
 	 * @method doc.getPrefixesFromQuery
 	 * @return object
 	 */
-	yasqe.getPrefixesFromQuery = function() {
+	yasqe.getPrefixesFromQuery = function () {
 		return require('./prefixUtils.js').getPrefixesFromQuery(yasqe);
 	};
 
-	yasqe.addPrefixes = function(prefixes) {
+	yasqe.addPrefixes = function (prefixes) {
 		return require('./prefixUtils.js').addPrefixes(yasqe, prefixes);
 	};
-	yasqe.removePrefixes = function(prefixes) {
+	yasqe.removePrefixes = function (prefixes) {
 		return require('./prefixUtils.js').removePrefixes(yasqe, prefixes);
 	};
 
-	yasqe.getValueWithoutComments = function() {
+	yasqe.getValueWithoutComments = function () {
 		var cleanedQuery = "";
-		root.runMode(yasqe.getValue(), "sparql11", function(stringVal, className) {
+		root.runMode(yasqe.getValue(), "sparql11", function (stringVal, className) {
 			if (className != "comment") {
 				cleanedQuery += stringVal;
 			}
@@ -175,7 +176,7 @@ var extendCmInstance = function(yasqe) {
 	 * @return string
 	 *
 	 */
-	yasqe.getQueryType = function() {
+	yasqe.getQueryType = function () {
 		return yasqe.queryType;
 	};
 	/**
@@ -185,7 +186,7 @@ var extendCmInstance = function(yasqe) {
 	 * @return string
 	 *
 	 */
-	yasqe.getQueryMode = function() {
+	yasqe.getQueryMode = function () {
 		var type = yasqe.getQueryType();
 		if (type == "INSERT" || type == "DELETE" || type == "LOAD" || type == "CLEAR" || type == "CREATE" || type == "DROP" || type == "COPY" || type == "MOVE" || type == "ADD") {
 			return "update";
@@ -195,26 +196,26 @@ var extendCmInstance = function(yasqe) {
 
 	};
 
-	yasqe.setCheckSyntaxErrors = function(isEnabled) {
+	yasqe.setCheckSyntaxErrors = function (isEnabled) {
 		yasqe.options.syntaxErrorCheck = isEnabled;
 		checkSyntax(yasqe);
 	};
 
-	yasqe.enableCompleter = function(name) {
+	yasqe.enableCompleter = function (name) {
 		addCompleterToSettings(yasqe.options, name);
 		if (root.Autocompleters[name]) yasqe.autocompleters.init(name, root.Autocompleters[name]);
 	};
-	yasqe.disableCompleter = function(name) {
+	yasqe.disableCompleter = function (name) {
 		removeCompleterFromSettings(yasqe.options, name);
 	};
 	return yasqe;
 };
 
-var addCompleterToSettings = function(settings, name) {
+var addCompleterToSettings = function (settings, name) {
 	if (!settings.autocompleters) settings.autocompleters = [];
 	settings.autocompleters.push(name);
 };
-var removeCompleterFromSettings = function(settings, name) {
+var removeCompleterFromSettings = function (settings, name) {
 	if (typeof settings.autocompleters == "object") {
 		var index = $.inArray(name, settings.autocompleters);
 		if (index >= 0) {
@@ -223,7 +224,7 @@ var removeCompleterFromSettings = function(settings, name) {
 		}
 	}
 };
-var postProcessCmElement = function(yasqe) {
+var postProcessCmElement = function (yasqe) {
 	/**
 	 * Set doc value
 	 */
@@ -239,34 +240,34 @@ var postProcessCmElement = function(yasqe) {
 	/**
 	 * Add event handlers
 	 */
-	yasqe.on('blur', function(yasqe, eventInfo) {
+	yasqe.on('blur', function (yasqe, eventInfo) {
 		root.storeQuery(yasqe);
 	});
-	yasqe.on('change', function(yasqe, eventInfo) {
+	yasqe.on('change', function (yasqe, eventInfo) {
 		checkSyntax(yasqe);
 		root.updateQueryButton(yasqe);
 		root.positionButtons(yasqe);
 	});
-	yasqe.on('changes', function() {
+	yasqe.on('changes', function () {
 		//e.g. on paste
 		checkSyntax(yasqe);
 		root.updateQueryButton(yasqe);
 		root.positionButtons(yasqe);
 	});
 
-	yasqe.on('cursorActivity', function(yasqe, eventInfo) {
+	yasqe.on('cursorActivity', function (yasqe, eventInfo) {
 		updateButtonsTransparency(yasqe);
 	});
 	yasqe.prevQueryValid = false;
 	checkSyntax(yasqe); // on first load, check as well (our stored or default query might be incorrect)
 	root.positionButtons(yasqe);
 
-	$(yasqe.getWrapperElement()).on('mouseenter', '.cm-atom', function() {
+	$(yasqe.getWrapperElement()).on('mouseenter', '.cm-atom', function () {
 		var matchText = $(this).text();
-		$(yasqe.getWrapperElement()).find('.cm-atom').filter(function() {
+		$(yasqe.getWrapperElement()).find('.cm-atom').filter(function () {
 			return $(this).text() === matchText;
 		}).addClass('matchingVar');
-	}).on('mouseleave', '.cm-atom', function() {
+	}).on('mouseleave', '.cm-atom', function () {
 		$(yasqe.getWrapperElement()).find('.matchingVar').removeClass('matchingVar');
 	});
 	/**
@@ -275,7 +276,7 @@ var postProcessCmElement = function(yasqe) {
 	if (yasqe.options.consumeShareLink) {
 		yasqe.options.consumeShareLink(yasqe, getUrlParams());
 		//and: add a hash listener!
-		window.addEventListener("hashchange", function() {
+		window.addEventListener("hashchange", function () {
 			yasqe.options.consumeShareLink(yasqe, getUrlParams());
 		});
 	}
@@ -285,7 +286,7 @@ var postProcessCmElement = function(yasqe) {
 /**
  * get url params. first try fetching using hash. If it fails, try the regular query parameters (for backwards compatability)
  */
-var getUrlParams = function() {
+var getUrlParams = function () {
 	//first try hash
 	var urlParams = null;
 	if (window.location.hash.length > 1) {
@@ -306,7 +307,7 @@ var getUrlParams = function() {
  * Update transparency of buttons. Increase transparency when cursor is below buttons
  */
 
-var updateButtonsTransparency = function(yasqe) {
+var updateButtonsTransparency = function (yasqe) {
 	yasqe.cursor = $(".CodeMirror-cursor");
 	if (yasqe.buttons && yasqe.buttons.is(":visible") && yasqe.cursor.length > 0) {
 		if (utils.elementsOverlap(yasqe.cursor, yasqe.buttons)) {
@@ -326,7 +327,7 @@ var updateButtonsTransparency = function(yasqe) {
 
 
 var clearError = null;
-var checkSyntax = function(yasqe, deepcheck) {
+var checkSyntax = function (yasqe, deepcheck) {
 
 	yasqe.queryValid = true;
 
@@ -359,9 +360,9 @@ var checkSyntax = function(yasqe, deepcheck) {
 			var warningEl = yutils.svg.getElement(imgs.warning);
 			if (state.possibleCurrent && state.possibleCurrent.length > 0) {
 				//				warningEl.style.zIndex = "99999999";
-				require('./tooltip')(yasqe, warningEl, function() {
+				require('./tooltip')(yasqe, warningEl, function () {
 					var expectedEncoded = [];
-					state.possibleCurrent.forEach(function(expected) {
+					state.possibleCurrent.forEach(function (expected) {
 						expectedEncoded.push("<strong style='text-decoration:underline'>" + $("<div/>").text(expected).html() + "</strong>");
 					});
 					return "This line is invalid. Expected: " + expectedEncoded.join(", ");
@@ -402,23 +403,26 @@ $.extend(root, CodeMirror);
 
 //add registrar for autocompleters
 root.Autocompleters = {};
-root.registerAutocompleter = function(name, constructor) {
+root.registerAutocompleter = function (name, constructor) {
 	root.Autocompleters[name] = constructor;
 	addCompleterToSettings(root.defaults, name);
 }
 
-root.autoComplete = function(yasqe) {
+root.autoComplete = function (yasqe) {
 	//this function gets called when pressing the keyboard shortcut. I.e., autoShow = false
 	yasqe.autocompleters.autoComplete(false);
 };
 //include the autocompleters we provide out-of-the-box
-root.registerAutocompleter("prefixes", require("./autocompleters/prefixes.js"));
+//root.registerAutocompleter("prefixes", require("./autocompleters/prefixes.js"));
+root.registerAutocompleter("sesame-prefixes", require("./autocompleters/sesame-prefixes.js"));
+root.registerAutocompleter("localNames", require("./autocompleters/localNames.js"));
 root.registerAutocompleter("properties", require("./autocompleters/properties.js"));
 root.registerAutocompleter("classes", require("./autocompleters/classes.js"));
+root.registerAutocompleter("standard", require("./autocompleters/standard.js"));
 root.registerAutocompleter("variables", require("./autocompleters/variables.js"));
 
 
-root.positionButtons = function(yasqe) {
+root.positionButtons = function (yasqe) {
 	var scrollBar = $(yasqe.getWrapperElement()).find(".CodeMirror-vscrollbar");
 	var offset = 0;
 	if (scrollBar.is(":visible")) {
@@ -435,14 +439,14 @@ root.positionButtons = function(yasqe) {
  * @default {query: doc.getValue()}
  * @return object
  */
-root.createShareLink = function(yasqe) {
+root.createShareLink = function (yasqe) {
 	//extend existing link, so first fetch current arguments
 	var urlParams = {};
 	if (window.location.hash.length > 1) urlParams = $.deparam(window.location.hash.substring(1));
 	urlParams['query'] = yasqe.getValue();
 	return urlParams;
 };
-root.getAsCurl = function(yasqe, ajaxConfig) {
+root.getAsCurl = function (yasqe, ajaxConfig) {
 	var curl = require('./curl.js');
 	return curl.createCurlString(yasqe, ajaxConfig);
 };
@@ -452,12 +456,12 @@ root.getAsCurl = function(yasqe, ajaxConfig) {
  * @method YASQE.consumeShareLink
  * @param {doc} YASQE document
  */
-root.consumeShareLink = function(yasqe, urlParams) {
+root.consumeShareLink = function (yasqe, urlParams) {
 	if (urlParams && urlParams.query) {
 		yasqe.setValue(urlParams.query);
 	}
 };
-root.drawButtons = function(yasqe) {
+root.drawButtons = function (yasqe) {
 	yasqe.buttons = $("<div class='yasqe_buttons'></div>").appendTo($(yasqe.getWrapperElement()));
 
 	/**
@@ -466,58 +470,58 @@ root.drawButtons = function(yasqe) {
 	if (yasqe.options.createShareLink) {
 
 		var svgShare = $(yutils.svg.getElement(imgs.share));
-		svgShare.click(function(event) {
+		svgShare.click(function (event) {
+			event.stopPropagation();
+			var popup = $("<div class='yasqe_sharePopup'></div>").appendTo(yasqe.buttons);
+			$('html').click(function () {
+				if (popup) popup.remove();
+			});
+
+			popup.click(function (event) {
 				event.stopPropagation();
-				var popup = $("<div class='yasqe_sharePopup'></div>").appendTo(yasqe.buttons);
-				$('html').click(function() {
-					if (popup) popup.remove();
+			});
+			var $input = $("<input>").val(location.protocol + '//' + location.host + location.pathname + location.search + "#" + $.param(yasqe.options.createShareLink(yasqe)));
+
+			$input.focus(function () {
+				var $this = $(this);
+				$this.select();
+
+				// Work around Chrome's little problem
+				$this.mouseup(function () {
+					// Prevent further mouseup intervention
+					$this.unbind("mouseup");
+					return false;
 				});
+			});
 
-				popup.click(function(event) {
-					event.stopPropagation();
-				});
-				var $input = $("<input>").val(location.protocol + '//' + location.host + location.pathname + location.search + "#" + $.param(yasqe.options.createShareLink(yasqe)));
-
-				$input.focus(function() {
-					var $this = $(this);
-					$this.select();
-
-					// Work around Chrome's little problem
-					$this.mouseup(function() {
-						// Prevent further mouseup intervention
-						$this.unbind("mouseup");
-						return false;
-					});
-				});
-
-				popup.empty().append($('<div>', {class:'inputWrapper'}).append($input));
-				if (yasqe.options.createShortLink) {
-					popup.addClass('enableShort');
-					$('<button>Shorten</button>')
-						.addClass('yasqe_btn yasqe_btn-sm yasqe_btn-primary')
-						.click(function() {
-							$(this).parent().find('button').attr('disabled', 'disabled');
-							yasqe.options.createShortLink($input.val(), function(errString, shortLink) {
-								if (errString) {
-									$input.remove();
-									popup.find('.inputWrapper').append($('<span>', {class:"shortlinkErr"}).text(errString));
-								} else {
-									$input.val(shortLink).focus();
-								}
-							})
-						}).appendTo(popup);
-				}
-				$('<button>CURL</button>')
+			popup.empty().append($('<div>', { class: 'inputWrapper' }).append($input));
+			if (yasqe.options.createShortLink) {
+				popup.addClass('enableShort');
+				$('<button>Shorten</button>')
 					.addClass('yasqe_btn yasqe_btn-sm yasqe_btn-primary')
-					.click(function() {
-
+					.click(function () {
 						$(this).parent().find('button').attr('disabled', 'disabled');
-						$input.val(root.getAsCurl(yasqe)).focus();
+						yasqe.options.createShortLink($input.val(), function (errString, shortLink) {
+							if (errString) {
+								$input.remove();
+								popup.find('.inputWrapper').append($('<span>', { class: "shortlinkErr" }).text(errString));
+							} else {
+								$input.val(shortLink).focus();
+							}
+						})
 					}).appendTo(popup);
-				var positions = svgShare.position();
-				popup.css("top", (positions.top + svgShare.outerHeight() + parseInt(popup.css('padding-top')) ) + "px").css("left", ((positions.left + svgShare.outerWidth()) - popup.outerWidth()) + "px");
-				$input.focus();
-			})
+			}
+			$('<button>CURL</button>')
+				.addClass('yasqe_btn yasqe_btn-sm yasqe_btn-primary')
+				.click(function () {
+
+					$(this).parent().find('button').attr('disabled', 'disabled');
+					$input.val(root.getAsCurl(yasqe)).focus();
+				}).appendTo(popup);
+			var positions = svgShare.position();
+			popup.css("top", (positions.top + svgShare.outerHeight() + parseInt(popup.css('padding-top'))) + "px").css("left", ((positions.left + svgShare.outerWidth()) - popup.outerWidth()) + "px");
+			$input.focus();
+		})
 			.addClass("yasqe_share")
 			.attr("title", "Share your query")
 			.appendTo(yasqe.buttons);
@@ -530,18 +534,18 @@ root.drawButtons = function(yasqe) {
 	 */
 
 	var toggleFullscreen = $('<div>', {
-			class: 'fullscreenToggleBtns'
-		})
+		class: 'fullscreenToggleBtns'
+	})
 		.append($(yutils.svg.getElement(imgs.fullscreen))
 			.addClass("yasqe_fullscreenBtn")
 			.attr("title", "Set editor full screen")
-			.click(function() {
+			.click(function () {
 				yasqe.setOption("fullScreen", true);
 			}))
 		.append($(yutils.svg.getElement(imgs.smallscreen))
 			.addClass("yasqe_smallscreenBtn")
 			.attr("title", "Set editor to normale size")
-			.click(function() {
+			.click(function () {
 				yasqe.setOption("fullScreen", false);
 			}))
 	yasqe.buttons.append(toggleFullscreen);
@@ -549,9 +553,9 @@ root.drawButtons = function(yasqe) {
 
 	if (yasqe.options.sparql.showQueryButton) {
 		$("<div>", {
-				class: 'yasqe_queryButton'
-			})
-			.click(function() {
+			class: 'yasqe_queryButton'
+		})
+			.click(function () {
 				if ($(this).hasClass("query_busy")) {
 					if (yasqe.xhr) yasqe.xhr.abort();
 					root.updateQueryButton(yasqe);
@@ -578,7 +582,7 @@ var queryButtonIds = {
  * @param {doc} YASQE document
  * @param status {string|null, "busy"|"valid"|"error"}
  */
-root.updateQueryButton = function(yasqe, status) {
+root.updateQueryButton = function (yasqe, status) {
 	var queryButton = $(yasqe.getWrapperElement()).find(".yasqe_queryButton");
 	if (queryButton.length == 0) return; //no query button drawn
 
@@ -591,8 +595,8 @@ root.updateQueryButton = function(yasqe, status) {
 	if (status != yasqe.queryStatus) {
 		queryButton
 			.empty()
-			.removeClass(function(index, classNames) {
-				return classNames.split(" ").filter(function(c) {
+			.removeClass(function (index, classNames) {
+				return classNames.split(" ").filter(function (c) {
 					//remove classname from previous status
 					return c.indexOf("query_") == 0;
 				}).join(" ");
@@ -618,7 +622,7 @@ root.updateQueryButton = function(yasqe, status) {
  * @param config {object}
  * @returns {doc} YASQE document
  */
-root.fromTextArea = function(textAreaEl, config) {
+root.fromTextArea = function (textAreaEl, config) {
 	config = extendConfig(config);
 	//add yasqe div as parent (needed for styles to be manageable and scoped).
 	//In this case, I -also- put it as parent el of the text area. This is wrapped in a div now
@@ -631,13 +635,13 @@ root.fromTextArea = function(textAreaEl, config) {
 };
 
 
-root.storeQuery = function(yasqe) {
+root.storeQuery = function (yasqe) {
 	var storageId = utils.getPersistencyId(yasqe, yasqe.options.persistent);
 	if (storageId) {
 		yutils.storage.set(storageId, yasqe.getValue(), "month");
 	}
 };
-root.commentLines = function(yasqe) {
+root.commentLines = function (yasqe) {
 	var startLine = yasqe.getCursor(true).line;
 	var endLine = yasqe.getCursor(false).line;
 	var min = Math.min(startLine, endLine);
@@ -659,9 +663,9 @@ root.commentLines = function(yasqe) {
 				line: i,
 				ch: 0
 			}, {
-				line: i,
-				ch: 1
-			});
+					line: i,
+					ch: 1
+				});
 		} else {
 			// Not all lines are commented, so add comments
 			yasqe.replaceRange("#", {
@@ -673,7 +677,7 @@ root.commentLines = function(yasqe) {
 	}
 };
 
-root.copyLineUp = function(yasqe) {
+root.copyLineUp = function (yasqe) {
 	var cursor = yasqe.getCursor();
 	var lineCount = yasqe.lineCount();
 	// First create new empty line at end of text
@@ -688,19 +692,19 @@ root.copyLineUp = function(yasqe) {
 			line: i,
 			ch: 0
 		}, {
-			line: i,
-			ch: yasqe.getLine(i).length
-		});
+				line: i,
+				ch: yasqe.getLine(i).length
+			});
 	}
 };
-root.copyLineDown = function(yasqe) {
+root.copyLineDown = function (yasqe) {
 	root.copyLineUp(yasqe);
 	// Make sure cursor goes one down (we are copying downwards)
 	var cursor = yasqe.getCursor();
 	cursor.line++;
 	yasqe.setCursor(cursor);
 };
-root.doAutoFormat = function(yasqe) {
+root.doAutoFormat = function (yasqe) {
 	if (yasqe.somethingSelected()) {
 		var to = {
 			line: yasqe.getCursor(false).line,
@@ -714,15 +718,15 @@ root.doAutoFormat = function(yasqe) {
 			line: 0,
 			ch: 0
 		}, {
-			line: totalLines,
-			ch: totalChars
-		});
+				line: totalLines,
+				ch: totalChars
+			});
 	}
 
 };
 
 
-var autoFormatRange = function(yasqe, from, to) {
+var autoFormatRange = function (yasqe, from, to) {
 	var absStart = yasqe.indexFromPos(from);
 	var absEnd = yasqe.indexFromPos(to);
 	// Insert additional line breaks where necessary according to the
@@ -730,7 +734,7 @@ var autoFormatRange = function(yasqe, from, to) {
 	var res = autoFormatLineBreaks(yasqe.getValue(), absStart, absEnd);
 
 	// Replace and auto-indent the range
-	yasqe.operation(function() {
+	yasqe.operation(function () {
 		yasqe.replaceRange(res, from, to);
 		var startLine = yasqe.posFromIndex(absStart).line;
 		var endLine = yasqe.posFromIndex(absStart + res.length).line;
@@ -740,7 +744,7 @@ var autoFormatRange = function(yasqe, from, to) {
 	});
 };
 
-var autoFormatLineBreaks = function(text, start, end) {
+var autoFormatLineBreaks = function (text, start, end) {
 	text = text.substring(start, end);
 	var breakAfterArray = [
 		["keyword", "ws", "prefixed", "ws", "uri"], // i.e. prefix declaration
@@ -748,7 +752,7 @@ var autoFormatLineBreaks = function(text, start, end) {
 	];
 	var breakAfterCharacters = ["{", ".", ";"];
 	var breakBeforeCharacters = ["}"];
-	var getBreakType = function(stringVal, type) {
+	var getBreakType = function (stringVal, type) {
 		for (var i = 0; i < breakAfterArray.length; i++) {
 			if (stackTrace.valueOf().toString() == breakAfterArray[i].valueOf()
 				.toString()) {
@@ -772,7 +776,7 @@ var autoFormatLineBreaks = function(text, start, end) {
 	var formattedQuery = "";
 	var currentLine = "";
 	var stackTrace = [];
-	CodeMirror.runMode(text, "sparql11", function(stringVal, type) {
+	CodeMirror.runMode(text, "sparql11", function (stringVal, type) {
 		stackTrace.push(type);
 		var breakType = getBreakType(stringVal, type);
 		if (breakType != 0) {

@@ -5,15 +5,25 @@ var $ = require('jquery'),
 	Trie = require('../../lib/trie.js'),
 	YASQE = require('../main.js');
 
-module.exports = function(YASQE, yasqe) {
+module.exports = function (YASQE, yasqe) {
 	var completionNotifications = {};
 	var completers = {};
 	var tries = {};
+	// introduce a flag to not trigger continuous completion always
+	var completionTriggeredFlag = false;
 
-	yasqe.on('cursorActivity', function(yasqe, eventInfo) {
+	yasqe.on('cursorActivity', function (yasqe, eventInfo) {
 		autoComplete(true);
 	});
-	yasqe.on('change', function() {
+	yasqe.on('keyHandled', function (yasqe, name, ev) {
+		if (name === 'Esc') {
+			completionTriggeredFlag = false;
+		}
+	});
+	yasqe.on('change', function () {
+		if (" " == ev.text) {
+			completionTriggeredFlag = false;
+		}
 		var needPossibleAdjustment = [];
 		for (var notificationName in completionNotifications) {
 			if (completionNotifications[notificationName].is(':visible')) {
@@ -27,7 +37,7 @@ module.exports = function(YASQE, yasqe) {
 			if (scrollBar.is(":visible")) {
 				offset = scrollBar.outerWidth();
 			}
-			needPossibleAdjustment.forEach(function(notification) {
+			needPossibleAdjustment.forEach(function (notification) {
 				notification.css("right", offset)
 			});
 		}
@@ -41,7 +51,7 @@ module.exports = function(YASQE, yasqe) {
 	 * @method doc.storeBulkCompletions
 	 * @param completions {array}
 	 */
-	var storeBulkCompletions = function(completer, completions) {
+	var storeBulkCompletions = function (completer, completions) {
 		// store array as trie
 		tries[completer.name] = new Trie();
 		for (var i = 0; i < completions.length; i++) {
@@ -52,11 +62,11 @@ module.exports = function(YASQE, yasqe) {
 		if (storageId) yutils.storage.set(storageId, completions, "month");
 	};
 
-	var initCompleter = function(name, completionInit) {
+	var initCompleter = function (name, completionInit) {
 		var completer = completers[name] = new completionInit(yasqe, name);
 		completer.name = name;
 		if (completer.bulk) {
-			var storeArrayAsBulk = function(suggestions) {
+			var storeArrayAsBulk = function (suggestions) {
 				if (suggestions && suggestions instanceof Array && suggestions.length > 0) {
 					storeBulkCompletions(completer, suggestions);
 				}
@@ -89,15 +99,24 @@ module.exports = function(YASQE, yasqe) {
 		}
 	};
 
-	var autoComplete = function(fromAutoShow) {
+	var autoComplete = function (fromAutoShow) {
 		if (yasqe.somethingSelected())
 			return;
-		var tryHintType = function(completer) {
+		yasqe.fromAutoShow = fromAutoShow;
+		var tryHintType = function (completer) {
+			if (fromAutoShow && !completionTriggeredFlag) {
+				return false;
+			}
 			if (fromAutoShow // from autoShow, i.e. this gets called each time the editor content changes
-				&& (!completer.autoShow // autoshow for  this particular type of autocompletion is -not- enabled
-					|| (!completer.bulk && completer.async)) // async is enabled (don't want to re-do ajax-like request for every editor change)
+				&& (!completer.autoShow) // autoshow for  this particular type of autocompletion is -not- enabled
+				// Comment this, we want to do ajax request for autoShow for localNames autocompletion
+				// || (!completer.bulk && completer.async)) // async is enabled (don't want to re-do ajax-like request for every editor change)
 			) {
 				return false;
+			}
+
+			if (!fromAutoShow) {
+				completionTriggeredFlag = true;
 			}
 
 			var hintConfig = {
@@ -107,7 +126,7 @@ module.exports = function(YASQE, yasqe) {
 			if (!completer.bulk && completer.async) {
 				hintConfig.async = true;
 			}
-			var wrappedHintCallback = function(yasqe, callback) {
+			var wrappedHintCallback = function (yasqe, callback) {
 				return getCompletionHintsObject(completer, callback);
 			};
 			var result = YASQE.showHint(yasqe, wrappedHintCallback, hintConfig);
@@ -139,8 +158,8 @@ module.exports = function(YASQE, yasqe) {
 
 
 
-	var getCompletionHintsObject = function(completer, callback) {
-		var getSuggestionsFromToken = function(partialToken) {
+	var getCompletionHintsObject = function (completer, callback) {
+		var getSuggestionsFromToken = function (partialToken) {
 			var stringToAutocomplete = partialToken.autocompletionString || partialToken.string;
 			var suggestions = [];
 			if (tries[completer.name]) {
@@ -172,7 +191,7 @@ module.exports = function(YASQE, yasqe) {
 			// regular behaviour would keep changing the codemirror dom, hence
 			// constantly calling this callback
 			if (!completer.bulk && completer.async) {
-				var wrappedCallback = function(suggestions) {
+				var wrappedCallback = function (suggestions) {
 					callback(getSuggestionsAsHintObject(suggestions, completer, token));
 				};
 				completer.get(token, wrappedCallback);
@@ -183,21 +202,55 @@ module.exports = function(YASQE, yasqe) {
 		}
 	};
 
+	var replaceAll = function (str, find, replace) {
+		return str.replace(new RegExp(find, 'g'), replace);
+	};
+
+	var encodeForSparql = function (str) {
+		if (str.trim().startsWith("<") && str.trim().endsWith(">")) {
+			return str;
+		}
+		str = encodeURIComponent(str);
+		str = replaceAll(str, "[*]", "%2a");
+		str = replaceAll(str, "[!]", "%21");
+		str = replaceAll(str, "[(]", "%28");
+		str = replaceAll(str, "[)]", "%29");
+		str = replaceAll(str, "[~]", "%7e");
+		str = replaceAll(str, "[']", "%27");
+		return str;
+	};
 
 	/**
 	 *  get our array of suggestions (strings) in the codemirror hint format
 	 */
-	var getSuggestionsAsHintObject = function(suggestions, completer, token) {
+	var getSuggestionsAsHintObject = function (suggestions, completer, token) {
 		var hintList = [];
 		for (var i = 0; i < suggestions.length; i++) {
 			var suggestedString = suggestions[i];
 			if (completer.postProcessToken) {
 				suggestedString = completer.postProcessToken(token, suggestedString);
 			}
+
+			var displayTextVar = replaceAll(replaceAll(suggestedString, "<", "&lt;"), ">", "&gt;");
+			displayTextVar = replaceAll(replaceAll(displayTextVar, "&lt;b&gt;", "<span class='CodeMirror-highlight'>"), "&lt;/b&gt;", "</span>");
+			suggestedString = replaceAll(replaceAll(suggestedString, "<b>", ""), "</b>", "");
+
+			if (!(suggestedString.startsWith("<") && suggestedString.endsWith(">")) && suggestedString.indexOf(":") > 0) {
+				var prefixSplit = suggestedString.indexOf(":");
+				suggestedString = suggestedString.substring(0, prefixSplit + 1) + encodeForSparql(suggestedString.substring(prefixSplit + 1));
+			}
+
 			hintList.push({
 				text: suggestedString,
-				displayText: suggestedString,
-				hint: selectHint,
+				displayText: displayTextVar,
+				hint: function (yasqe, data, completion) {
+					completionTriggeredFlag = false;
+					selectHint(yasqe, data, completion);
+
+				},
+				render: function (elt, data, cur) {
+					$(elt).append(cur.displayText);
+				}
 			});
 		}
 
@@ -229,20 +282,20 @@ module.exports = function(YASQE, yasqe) {
 		init: initCompleter,
 		completers: completers,
 		notifications: {
-			getEl: function(completer) {
+			getEl: function (completer) {
 				return $(completionNotifications[completer.name]);
 			},
-			show: function(yasqe, completer) {
+			show: function (yasqe, completer) {
 				//only draw when the user needs to use a keypress to summon autocompletions
 				if (!completer.autoshow) {
 					if (!completionNotifications[completer.name]) completionNotifications[completer.name] = $("<div class='completionNotification'></div>");
 					completionNotifications[completer.name]
 						.show()
-						.text("Press " + (navigator.userAgent.indexOf('Mac OS X') != -1 ? "CMD" : "CTRL") + " - <spacebar> to autocomplete")
+						.text("Press Alt+Enter to autocomplete")
 						.appendTo($(yasqe.getWrapperElement()));
 				}
 			},
-			hide: function(yasqe, completer) {
+			hide: function (yasqe, completer) {
 				if (completionNotifications[completer.name]) {
 					completionNotifications[completer.name].hide();
 				}
@@ -250,7 +303,7 @@ module.exports = function(YASQE, yasqe) {
 
 		},
 		autoComplete: autoComplete,
-		getTrie: function(completer) {
+		getTrie: function (completer) {
 			return (typeof completer == "string" ? tries[completer] : tries[completer.name]);
 		}
 	}
@@ -267,7 +320,7 @@ module.exports = function(YASQE, yasqe) {
 /**
  * function which fires after the user selects a completion. this function checks whether we actually need to store this one (if completion is same as current token, don't do anything)
  */
-var selectHint = function(yasqe, data, completion) {
+var selectHint = function (yasqe, data, completion) {
 	if (completion.text != yasqe.getTokenAt(yasqe.getCursor()).string) {
 		yasqe.replaceRange(completion.text, data.from, data.to);
 	}
