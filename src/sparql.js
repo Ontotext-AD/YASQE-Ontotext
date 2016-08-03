@@ -26,7 +26,7 @@ YASQE.executeQuery = function (yasqe, callbackOrConfig) {
 			port = "80";
 		}
 	}
-	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
+	var graphDBAuth = utils.getCookie('com.ontotext.graphdb.auth' + port);
 	if (graphDBAuth != '') {
 		$.ajaxSetup({
 			headers: {
@@ -148,9 +148,10 @@ YASQE.executeQuery = function (yasqe, callbackOrConfig) {
 	YASQE.signal(yasqe, 'query', yasqe, callbackOrConfig);
 	YASQE.updateQueryButton(yasqe, "busy");
 	yasqe.setBackdrop(true);
-	if (config.callbacks.resetResults && (typeof config.callbacks.resetResults == "function")) {
-		config.callbacks.resetResults();
-	}
+	// var config = (typeof callbackOrConfig == "object" ? callbackOrConfig : {});
+	// if (config.callbacks.resetResults && (typeof config.callbacks.resetResults == "function")) {
+	// 	config.callbacks.resetResults();
+	// }
 	yasqe.xhr = $.ajax(YASQE.getAjaxConfig(yasqe, callbackOrConfig));
 };
 

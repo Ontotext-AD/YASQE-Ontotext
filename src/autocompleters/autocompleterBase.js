@@ -20,9 +20,11 @@ module.exports = function (YASQE, yasqe) {
 			completionTriggeredFlag = false;
 		}
 	});
-	yasqe.on('change', function () {
-		if (" " == ev.text) {
-			completionTriggeredFlag = false;
+	yasqe.on('change', function (yasqe, name, ev) {
+		if (ev !== undefined) {
+			if (" " == ev.text) {
+				completionTriggeredFlag = false;
+			}
 		}
 		var needPossibleAdjustment = [];
 		for (var notificationName in completionNotifications) {

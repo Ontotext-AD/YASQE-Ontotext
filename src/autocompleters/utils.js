@@ -57,7 +57,7 @@ var postprocessResourceTokenForCompletion = function (yasqe, token, suggestedStr
 	return suggestedString;
 };
 
-function getCookie(cname) {
+var getCookie = function getCookie(cname) {
 	var name = cname + "=";
 	var ca = document.cookie.split(';');
 	for (var i = 0; i < ca.length; i++) {
@@ -66,7 +66,7 @@ function getCookie(cname) {
 		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length, c.length));
 	}
 	return "";
-}
+};
 
 
 var setupHeaders = function (backendRepositoryID) {
@@ -166,4 +166,6 @@ module.exports = {
 	fetchFromLov: fetchFromLov,
 	preprocessResourceTokenForCompletion: preprocessResourceTokenForCompletion,
 	postprocessResourceTokenForCompletion: postprocessResourceTokenForCompletion,
+	getCookie: getCookie,
+	setupHeaders: setupHeaders
 };

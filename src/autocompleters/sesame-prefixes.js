@@ -19,8 +19,17 @@ module.exports = function (yasqe, completerName) {
         get: function (token, callback) {
             if (backendRepositoryID != '') {
                 // TODO: find a way to get this from the security module in angular
-                utils.setupHeaders();
-                var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
+                utils.setupHeaders(backendRepositoryID);
+                var port = window.location.port;
+                if (!port) {
+                    if (window.location.protocol == 'https:') {
+                        port = "443";
+                    }
+                    else {
+                        port = "80";
+                    }
+                }
+                var graphDBAuth = utils.getCookie('com.ontotext.graphdb.auth' + port);
                 if (graphDBAuth != '') {
                     $.ajaxSetup({
                         headers: {
