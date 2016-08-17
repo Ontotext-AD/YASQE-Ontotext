@@ -15,6 +15,7 @@ module.exports = {
 }
 
 function findFirstPrefix(cm, line, ch, lineText) {
+	if (lineText.charAt(0) === "#") return;
 	if (!ch) ch = 0;
 	if (!lineText) lineText = cm.getLine(line);
 	lineText = lineText.toUpperCase();
