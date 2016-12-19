@@ -20,7 +20,6 @@ module.exports = function (yasqe, name) {
     };
 };
 
-<<<<<<< HEAD
 module.exports.fetchAutocomplete = function (yasqe, token, callback) {
     if (!token || !token.string || token.string.trim().length == 0) {
         return false;
