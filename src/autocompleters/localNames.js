@@ -20,6 +20,7 @@ module.exports = function (yasqe, name) {
     };
 };
 
+<<<<<<< HEAD
 module.exports.fetchAutocomplete = function (yasqe, token, callback) {
     if (!token || !token.string || token.string.trim().length == 0) {
         return false;
@@ -42,8 +43,9 @@ module.exports.fetchAutocomplete = function (yasqe, token, callback) {
         if (204 == jqXHR.status && !yasqe.fromAutoShow) {
             yasqe.toastBuildIndex();
         } else {
-            callback(data);
+            callback(data.suggestions.map(function(d) {return d.value}));
         }
+
 
     }, 'json').fail(function (data) {
         if (!yasqe.fromAutoShow) {

@@ -51,6 +51,10 @@ var postprocessResourceTokenForCompletion = function (yasqe, token, suggestedStr
 			var prefixFound = _.findKey(queryPrefixes, function (val) { return val === existingPrefix[0]; });
 			suggestedString = prefixFound + ":" + suggestedString.substring(queryPrefixes[prefixFound].length);
 		} else {
+            // Do not put brackets to prefixes
+            if (suggestedString.indexOf("<b>" + token.string) === 0) {
+                return suggestedString;
+            }
 			suggestedString = "<" + suggestedString + ">";
 		}
 	}
