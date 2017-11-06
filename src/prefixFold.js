@@ -30,6 +30,9 @@ function findFirstPrefix(cm, line, ch, lineText) {
 		}
 		if (pass == 1 && found < ch)
 			break;
+		if (lineText.length - found > lookFor.length && lineText.charAt(found + lookFor.length) === ":")
+		    // PREFIX: freeze bug, See GDB-1857
+		    return;
 		tokenType = cm.getTokenTypeAt(CodeMirror.Pos(line, found + 1));
 		if (!/^(comment|string)/.test(tokenType))
 			return found + 1;
