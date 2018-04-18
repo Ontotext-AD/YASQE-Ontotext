@@ -27373,7 +27373,7 @@ module.exports = function (yasqe, completerName) {
                 if (graphDBAuth != '') {
                     $.ajaxSetup({
                         headers: {
-                            'X-AUTH-TOKEN': graphDBAuth
+                            'Authorization': graphDBAuth
                         }
                     });
                 }
@@ -27777,7 +27777,7 @@ var setupHeaders = function (backendRepositoryID) {
 	var headers = {};
 	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
 	if (graphDBAuth != '') {
-		headers['X-AUTH-TOKEN'] = graphDBAuth;
+		headers['Authorization'] = graphDBAuth;
 	}
 	if (backendRepositoryID) {
 		headers['X-GraphDB-Repository'] = backendRepositoryID;
@@ -29264,7 +29264,7 @@ YASQE.executeQuery = function (yasqe, callbackOrConfig) {
 	if (graphDBAuth != '') {
 		$.ajaxSetup({
 			headers: {
-				'X-AUTH-TOKEN': graphDBAuth
+				'Authorization': graphDBAuth
 			}
 		});
 	}

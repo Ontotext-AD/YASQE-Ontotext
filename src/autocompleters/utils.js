@@ -86,7 +86,7 @@ var setupHeaders = function (backendRepositoryID) {
 	var headers = {};
 	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
 	if (graphDBAuth != '') {
-		headers['X-AUTH-TOKEN'] = graphDBAuth;
+		headers['Authorization'] = graphDBAuth;
 	}
 	if (backendRepositoryID) {
 		headers['X-GraphDB-Repository'] = backendRepositoryID;

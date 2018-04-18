@@ -33,7 +33,7 @@ module.exports = function (yasqe, completerName) {
                 if (graphDBAuth != '') {
                     $.ajaxSetup({
                         headers: {
-                            'X-AUTH-TOKEN': graphDBAuth
+                            'Authorization': graphDBAuth
                         }
                     });
                 }

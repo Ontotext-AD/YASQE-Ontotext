@@ -30,7 +30,7 @@ YASQE.executeQuery = function (yasqe, callbackOrConfig) {
 	if (graphDBAuth != '') {
 		$.ajaxSetup({
 			headers: {
-				'X-AUTH-TOKEN': graphDBAuth
+				'Authorization': graphDBAuth
 			}
 		});
 	}
