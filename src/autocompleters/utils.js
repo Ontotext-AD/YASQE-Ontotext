@@ -61,39 +61,6 @@ var postprocessResourceTokenForCompletion = function (yasqe, token, suggestedStr
 	return suggestedString;
 };
 
-var getCookie = function getCookie(cname) {
-	var name = cname + "=";
-	var ca = document.cookie.split(';');
-	for (var i = 0; i < ca.length; i++) {
-		var c = ca[i];
-		while (c.charAt(0) == ' ') c = c.substring(1);
-		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length, c.length));
-	}
-	return "";
-};
-
-
-var setupHeaders = function (backendRepositoryID) {
-	var port = window.location.port;
-	if (!port) {
-		if (window.location.protocol == 'https:') {
-			port = "443";
-		}
-		else {
-			port = "80";
-		}
-	}
-	var headers = {};
-	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
-	if (graphDBAuth != '') {
-		headers['Authorization'] = graphDBAuth;
-	}
-	if (backendRepositoryID) {
-		headers['X-GraphDB-Repository'] = backendRepositoryID;
-	}
-	$.ajaxSetup({ headers: headers });
-};
-
 //Use protocol relative request when served via http[s]*. Otherwise (e.g. file://, fetch via http)
 var reqProtocol = (window.location.protocol.indexOf('http') === 0 ? '//' : 'http://');
 var fetchFromLov = function (yasqe, completer, token, callback) {
@@ -169,7 +136,5 @@ var fetchFromLov = function (yasqe, completer, token, callback) {
 module.exports = {
 	fetchFromLov: fetchFromLov,
 	preprocessResourceTokenForCompletion: preprocessResourceTokenForCompletion,
-	postprocessResourceTokenForCompletion: postprocessResourceTokenForCompletion,
-	getCookie: getCookie,
-	setupHeaders: setupHeaders
+	postprocessResourceTokenForCompletion: postprocessResourceTokenForCompletion
 };

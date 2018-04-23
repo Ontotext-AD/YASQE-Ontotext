@@ -3,39 +3,6 @@ var $ = require('jquery'),
 	utils = require('./utils.js'),
 	YASQE = require('./main.js');
 
-YASQE.executeQuery = function (yasqe, callbackOrConfig) {
-
-	function getCookie(cname) {
-		var name = cname + "=";
-		var ca = document.cookie.split(';');
-		for (var i = 0; i < ca.length; i++) {
-			var c = ca[i];
-			while (c.charAt(0) == ' ') c = c.substring(1);
-			if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length, c.length));
-		}
-		return "";
-	}
-
-	// TODO: find a way to get this from the security module in angular
-	var port = window.location.port;
-	if (!port) {
-		if (window.location.protocol == 'https:') {
-			port = "443";
-		}
-		else {
-			port = "80";
-		}
-	}
-	var graphDBAuth = utils.getCookie('com.ontotext.graphdb.auth' + port);
-	if (graphDBAuth != '') {
-		$.ajaxSetup({
-			headers: {
-				'Authorization': graphDBAuth
-			}
-		});
-	}
-};
-
 YASQE.getAjaxConfig = function (yasqe, callbackOrConfig) {
 	var callback = (typeof callbackOrConfig == "function" ? callbackOrConfig : null);
 	var config = (typeof callbackOrConfig == "object" ? callbackOrConfig : {});

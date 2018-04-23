@@ -8456,8 +8456,14 @@ module.exports.postProcessToken = function(yasqe, token, suggestedString) {
 },{"./utils":38,"./utils.js":38,"jquery":undefined}],34:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
-var utils = require('./utils');
+var authToken;
+var repositoryId;
 module.exports = function (yasqe, name) {
+    yasqe.on("repositoryOrAuthorizationChanged", function (newRepositoryId, newAuthToken) {
+        repositoryId = newRepositoryId;
+        authToken = newAuthToken;
+    });
+
     return {
         isValidCompletionPosition: function () { return module.exports.isValidCompletionPosition(yasqe); },
         get: function (token, callback) {
@@ -8471,13 +8477,16 @@ module.exports = function (yasqe, name) {
         persistent: name,
         callbacks: {
             validPosition: yasqe.autocompleters.notifications.show,
-            invalidPosition: yasqe.autocompleters.notifications.hide,
+            invalidPosition: yasqe.autocompleters.notifications.hide
         }
     };
 };
 
 module.exports.fetchAutocomplete = function (yasqe, token, callback) {
-    if (!token || !token.string || token.string.trim().length == 0) {
+    if (!repositoryId || repositoryId === 'SYSTEM') {
+        return;
+    }
+    if (!token || !token.string || token.string.trim().length === 0) {
         return false;
     }
     var query;
@@ -8490,19 +8499,27 @@ module.exports.fetchAutocomplete = function (yasqe, token, callback) {
             query = token.autocompletionString;
         }
     }
-    if (backendRepositoryID === 'SYSTEM') {
-        return;
+    var headers = {
+        'X-GraphDB-Repository': repositoryId
+    };
+    if (authToken) {
+        headers['Authorization'] = authToken;
     }
-    utils.setupHeaders(backendRepositoryID);
-    $.get('rest/autocomplete/query', { q: query }, function (data, textStatus, jqXHR) {
-        if (204 == jqXHR.status && !yasqe.fromAutoShow) {
-            yasqe.toastBuildIndex();
-        } else {
-            callback(data.suggestions.map(function(d) {return d.value}));
-        }
-
-
-    }, 'json').fail(function (data) {
+    $.get({
+        url: 'rest/autocomplete/query',
+        data: {q: query},
+        success: function (data, textStatus, jqXHR) {
+            if (204 === jqXHR.status && !yasqe.fromAutoShow) {
+                yasqe.toastBuildIndex();
+            } else {
+                callback(data.suggestions.map(function (d) {
+                    return d.value
+                }));
+            }
+        },
+        dataType: 'json',
+        headers: headers
+    }).fail(function (data) {
         if (!yasqe.fromAutoShow) {
             yasqe.toastError(data);
         }
@@ -8530,7 +8547,7 @@ module.exports.preProcessToken = function (yasqe, token) {
 module.exports.postProcessToken = function (yasqe, token, suggestedString) {
     return require('./utils.js').postprocessResourceTokenForCompletion(yasqe, token, suggestedString);
 };
-},{"./utils":38,"./utils.js":38,"jquery":undefined}],35:[function(require,module,exports){
+},{"./utils.js":38,"jquery":undefined}],35:[function(require,module,exports){
 'use strict';
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})();
 module.exports = function(yasqe, name) {
@@ -8593,6 +8610,7 @@ var tokenTypes = {
     "string-2": "prefixed",
     "atom": "var"
 };
+var updateCallback;
 
 module.exports = function (yasqe, completerName) {
     //this autocompleter also fires on-change!
@@ -8600,52 +8618,14 @@ module.exports = function (yasqe, completerName) {
         module.exports.appendPrefixIfNeeded(yasqe, completerName);
     });
 
+    yasqe.on("namespacesChanged", function (namespaces) {
+        module.exports.updateNamespaces(yasqe, namespaces);
+    });
 
     return {
         isValidCompletionPosition: function () { return module.exports.isValidCompletionPosition(yasqe); },
         get: function (token, callback) {
-            if (backendRepositoryID != '') {
-                // TODO: find a way to get this from the security module in angular
-                utils.setupHeaders(backendRepositoryID);
-                var port = window.location.port;
-                if (!port) {
-                    if (window.location.protocol == 'https:') {
-                        port = "443";
-                    }
-                    else {
-                        port = "80";
-                    }
-                }
-                var graphDBAuth = utils.getCookie('com.ontotext.graphdb.auth' + port);
-                if (graphDBAuth != '') {
-                    $.ajaxSetup({
-                        headers: {
-                            'Authorization': graphDBAuth
-                        }
-                    });
-                }
-
-                $.get('repositories/' + backendRepositoryID + '/namespaces', function (data) {
-                    if (data.results) {
-                        var hasOnto = false;
-                        var prefixArray = data.results.bindings.map(function (namespace) {
-                            if (namespace.prefix.value === 'onto') {
-                                hasOnto = true;
-                            }
-                            return namespace.prefix.value + ": <" + namespace.namespace.value + ">";
-                        });
-                        if (!hasOnto) {
-                            prefixArray.push("onto: <http://www.ontotext.com/>");
-                        }
-
-                        prefixArray.sort();
-                        callback(prefixArray);
-                    }
-                    //TODO: What to do on error here
-                },
-                    'json'
-                );
-            }
+            updateCallback = callback;
         },
         preProcessToken: function (token) { return module.exports.preprocessPrefixTokenForCompletion(yasqe, token); },
         async: true,
@@ -8737,7 +8717,21 @@ module.exports.appendPrefixIfNeeded = function (yasqe, completerName) {
         }
     }
 };
+module.exports.updateNamespaces = function (yasqe, namespaces) {
+    var hasOnto = false;
+    var prefixArray = $.map(namespaces, function (namespace, prefix) {
+        if (prefix === 'onto') {
+            hasOnto = true;
+        }
+        return prefix + ": <" + namespace + ">";
+    });
+    if (!hasOnto) {
+        prefixArray.push("onto: <http://www.ontotext.com/>");
+    }
 
+    prefixArray.sort();
+    updateCallback(prefixArray);
+};
 
 },{"./utils":38,"jquery":undefined}],37:[function(require,module,exports){
 /**
@@ -8999,39 +8993,6 @@ var postprocessResourceTokenForCompletion = function (yasqe, token, suggestedStr
 	return suggestedString;
 };
 
-var getCookie = function getCookie(cname) {
-	var name = cname + "=";
-	var ca = document.cookie.split(';');
-	for (var i = 0; i < ca.length; i++) {
-		var c = ca[i];
-		while (c.charAt(0) == ' ') c = c.substring(1);
-		if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length, c.length));
-	}
-	return "";
-};
-
-
-var setupHeaders = function (backendRepositoryID) {
-	var port = window.location.port;
-	if (!port) {
-		if (window.location.protocol == 'https:') {
-			port = "443";
-		}
-		else {
-			port = "80";
-		}
-	}
-	var headers = {};
-	var graphDBAuth = getCookie('com.ontotext.graphdb.auth' + port);
-	if (graphDBAuth != '') {
-		headers['Authorization'] = graphDBAuth;
-	}
-	if (backendRepositoryID) {
-		headers['X-GraphDB-Repository'] = backendRepositoryID;
-	}
-	$.ajaxSetup({ headers: headers });
-};
-
 //Use protocol relative request when served via http[s]*. Otherwise (e.g. file://, fetch via http)
 var reqProtocol = (window.location.protocol.indexOf('http') === 0 ? '//' : 'http://');
 var fetchFromLov = function (yasqe, completer, token, callback) {
@@ -9107,9 +9068,7 @@ var fetchFromLov = function (yasqe, completer, token, callback) {
 module.exports = {
 	fetchFromLov: fetchFromLov,
 	preprocessResourceTokenForCompletion: preprocessResourceTokenForCompletion,
-	postprocessResourceTokenForCompletion: postprocessResourceTokenForCompletion,
-	getCookie: getCookie,
-	setupHeaders: setupHeaders
+	postprocessResourceTokenForCompletion: postprocessResourceTokenForCompletion
 };
 
 },{"../imgs.js":43,"./utils.js":38,"jquery":undefined,"yasgui-utils":28}],39:[function(require,module,exports){
@@ -10483,39 +10442,6 @@ module.exports = {
 var $ = (function(){try{return require('jquery')}catch(e){return window.jQuery}})(),
 	utils = require('./utils.js'),
 	YASQE = require('./main.js');
-
-YASQE.executeQuery = function (yasqe, callbackOrConfig) {
-
-	function getCookie(cname) {
-		var name = cname + "=";
-		var ca = document.cookie.split(';');
-		for (var i = 0; i < ca.length; i++) {
-			var c = ca[i];
-			while (c.charAt(0) == ' ') c = c.substring(1);
-			if (c.indexOf(name) == 0) return decodeURIComponent(c.substring(name.length, c.length));
-		}
-		return "";
-	}
-
-	// TODO: find a way to get this from the security module in angular
-	var port = window.location.port;
-	if (!port) {
-		if (window.location.protocol == 'https:') {
-			port = "443";
-		}
-		else {
-			port = "80";
-		}
-	}
-	var graphDBAuth = utils.getCookie('com.ontotext.graphdb.auth' + port);
-	if (graphDBAuth != '') {
-		$.ajaxSetup({
-			headers: {
-				'Authorization': graphDBAuth
-			}
-		});
-	}
-};
 
 YASQE.getAjaxConfig = function (yasqe, callbackOrConfig) {
 	var callback = (typeof callbackOrConfig == "function" ? callbackOrConfig : null);

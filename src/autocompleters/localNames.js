@@ -1,7 +1,13 @@
 'use strict';
 var $ = require('jquery');
-var utils = require('./utils');
+var authToken;
+var repositoryId;
 module.exports = function (yasqe, name) {
+    yasqe.on("repositoryOrAuthorizationChanged", function (newRepositoryId, newAuthToken) {
+        repositoryId = newRepositoryId;
+        authToken = newAuthToken;
+    });
+
     return {
         isValidCompletionPosition: function () { return module.exports.isValidCompletionPosition(yasqe); },
         get: function (token, callback) {
@@ -15,13 +21,16 @@ module.exports = function (yasqe, name) {
         persistent: name,
         callbacks: {
             validPosition: yasqe.autocompleters.notifications.show,
-            invalidPosition: yasqe.autocompleters.notifications.hide,
+            invalidPosition: yasqe.autocompleters.notifications.hide
         }
     };
 };
 
 module.exports.fetchAutocomplete = function (yasqe, token, callback) {
-    if (!token || !token.string || token.string.trim().length == 0) {
+    if (!repositoryId || repositoryId === 'SYSTEM') {
+        return;
+    }
+    if (!token || !token.string || token.string.trim().length === 0) {
         return false;
     }
     var query;
@@ -34,19 +43,27 @@ module.exports.fetchAutocomplete = function (yasqe, token, callback) {
             query = token.autocompletionString;
         }
     }
-    if (backendRepositoryID === 'SYSTEM') {
-        return;
+    var headers = {
+        'X-GraphDB-Repository': repositoryId
+    };
+    if (authToken) {
+        headers['Authorization'] = authToken;
     }
-    utils.setupHeaders(backendRepositoryID);
-    $.get('rest/autocomplete/query', { q: query }, function (data, textStatus, jqXHR) {
-        if (204 == jqXHR.status && !yasqe.fromAutoShow) {
-            yasqe.toastBuildIndex();
-        } else {
-            callback(data.suggestions.map(function(d) {return d.value}));
-        }
-
-
-    }, 'json').fail(function (data) {
+    $.get({
+        url: 'rest/autocomplete/query',
+        data: {q: query},
+        success: function (data, textStatus, jqXHR) {
+            if (204 === jqXHR.status && !yasqe.fromAutoShow) {
+                yasqe.toastBuildIndex();
+            } else {
+                callback(data.suggestions.map(function (d) {
+                    return d.value
+                }));
+            }
+        },
+        dataType: 'json',
+        headers: headers
+    }).fail(function (data) {
         if (!yasqe.fromAutoShow) {
             yasqe.toastError(data);
         }
