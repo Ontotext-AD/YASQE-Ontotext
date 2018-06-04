@@ -62,15 +62,8 @@
   .yasqe .cm-animate-fat-cursor {
     width: auto;
     border: 0;
-    -webkit-animation: blink 1.06s steps(1) infinite;
     animation: blink 1.06s steps(1) infinite;
     background-color: #7e7; }
-
-@-webkit-keyframes blink {
-  0% { }
-  50% {
-    background-color: transparent; }
-  100% { } }
 
 @keyframes blink {
   0% { }
@@ -225,7 +218,6 @@
     cursor: default;
     z-index: 4; }
   .yasqe .CodeMirror-gutter-wrapper {
-    -webkit-user-select: none;
     user-select: none; }
   .yasqe .CodeMirror-lines {
     cursor: text;
@@ -340,10 +332,6 @@
     content: "\25BE"; }
   .yasqe .CodeMirror-foldgutter-folded:after {
     content: "\25B8"; }
-
-@-webkit-keyframes spin {
-  100% {
-    -webkit-transform: rotate(360deg); } }
   .yasqe .yasqe_btn {
     color: #333;
     border: 1px solid transparent;
@@ -357,7 +345,6 @@
     white-space: nowrap;
     padding: 6px 12px;
     border-radius: 4px;
-    -webkit-user-select: none;
     user-select: none;
     -webkit-appearance: button;
     /* margin: 0; */
@@ -411,11 +398,9 @@
         box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
         width: 600px;
         height: auto;
-        display: -webkit-box;
         display: flex; }
         .yasqe .yasqe_buttons div.yasqe_sharePopup .inputWrapper {
-          -webkit-box-flex: 100;
-                  flex-grow: 100; }
+          flex-grow: 100; }
         .yasqe .yasqe_buttons div.yasqe_sharePopup input {
           float: left;
           width: 100%;
@@ -452,8 +437,7 @@
         box-sizing: border-box;
         border: solid 4px rgba(0, 0, 0, 0.2);
         border-top-color: #000;
-        -webkit-animation: spin 1s infinite linear;
-                animation: spin 1s infinite linear; }
+        animation: spin 1s infinite linear; }
   .yasqe .fullscreenToggleBtns {
     display: inline-block;
     margin-top: 3px; }
