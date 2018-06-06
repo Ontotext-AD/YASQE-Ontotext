@@ -19,8 +19,14 @@ function findFirstPrefix(cm, line, ch, lineText) {
 	if (!ch) ch = 0;
 	if (!lineText) lineText = cm.getLine(line);
 	lineText = lineText.toUpperCase();
+	var lastFound = lineText.length + 1;
 	for (var at = ch, pass = 0;;) {
 		var found = lineText.indexOf(lookFor, at);
+		// freeze bug, do not search the same string forever, GDB-2462
+		if (found === lastFound) {
+			return;
+		}
+		lastFound = found;
 		if (found == -1) {
 			if (pass == 1)
 				break;
