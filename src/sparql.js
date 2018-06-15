@@ -51,17 +51,6 @@ YASQE.getAjaxConfig = function (yasqe, callbackOrConfig) {
 		});
 	} else {
 		ajaxConfig.data = yasqe.getUrlArguments(config);
-		var countAjaxConfig = {};
-		$.extend(true, countAjaxConfig, ajaxConfig);
-		if (window.editor.getQueryMode() != "update") {
-			if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
-				countAjaxConfig.data = countAjaxConfig.data.filter(function (o) {
-					return o.name != 'offset' && o.name != 'limit';
-				});
-				countAjaxConfig.data.push({ name: 'count', value: '1' });
-				countAjaxConfig.complete = config.callbacks.countCallback;
-			}
-		}
 		if (config.setQueryLimit && (typeof config.setQueryLimit == "function")) {
 			ajaxConfig.data.forEach(function (o) {
 				if (o.name == "query") {
@@ -93,6 +82,17 @@ YASQE.getAjaxConfig = function (yasqe, callbackOrConfig) {
 		yasqe.setBackdrop(false);
 	};
 	var executeCount = function (event, jqXHR, ajaxOptions) {
+        var countAjaxConfig = {};
+        $.extend(true, countAjaxConfig, ajaxConfig);
+        if (window.editor.getQueryMode() !== "update") {
+            if (config.callbacks.countCallback && (typeof config.callbacks.countCallback === "function")) {
+                countAjaxConfig.data = countAjaxConfig.data.filter(function (o) {
+                    return o.name !== 'offset' && o.name !== 'limit';
+                });
+                countAjaxConfig.data.push({ name: 'count', value: '1' });
+                countAjaxConfig.complete = config.callbacks.countCallback;
+            }
+        }
 		window.editor && 200 === event.status && $.ajax(countAjaxConfig);
 	};
 	//Make sure the query button is updated again on complete
