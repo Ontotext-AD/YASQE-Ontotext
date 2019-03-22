@@ -27164,7 +27164,7 @@ YASQE.executeQuery = function(yasqe, callbackOrConfig) {
 
 	
 	ajaxConfig.data = yasqe.getUrlArguments(config);
-	if (window.editor.getQueryMode() != "update" || "ASK"!==window.editor.getQueryType()) {
+	if (window.editor.getQueryMode() != "update" || window.editor.getQueryType() !== "ASK") {
 			var countAjaxConfig = {};
 			$.extend(true, countAjaxConfig, ajaxConfig);
 			if (config.callbacks.countCallback && (typeof config.callbacks.countCallback == "function")) {
