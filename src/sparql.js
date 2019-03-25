@@ -84,7 +84,7 @@ YASQE.getAjaxConfig = function (yasqe, callbackOrConfig) {
 	var executeCount = function (event, jqXHR, ajaxOptions) {
         var countAjaxConfig = {};
         $.extend(true, countAjaxConfig, ajaxConfig);
-        if (window.editor.getQueryMode() !== "update") {
+        if (window.editor.getQueryMode() !== "update" || window.editor.getQueryType() !== "ASK") {
             if (config.callbacks.countCallback && (typeof config.callbacks.countCallback === "function")) {
                 countAjaxConfig.data = countAjaxConfig.data.filter(function (o) {
                     return o.name !== 'offset' && o.name !== 'limit';
