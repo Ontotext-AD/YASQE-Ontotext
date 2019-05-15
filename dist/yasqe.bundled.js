@@ -171,19 +171,6 @@ module.exports = {table:
      ";": ["[;,?[or([verbPath,verbSimple]),objectList]]","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
      ".": [], 
      "]": [], 
-     "{": [], 
-     "OPTIONAL": [], 
-     "MINUS": [], 
-     "GRAPH": [], 
-     "SERVICE": [], 
-     "FILTER": [], 
-     "BIND": [], 
-     "VALUES": [], 
-     "}": []}, 
-  "*[;,?[verb,objectList]]" : {
-     ";": ["[;,?[verb,objectList]]","*[;,?[verb,objectList]]"], 
-     ".": [], 
-     "]": [], 
      "}": [], 
      "GRAPH": [], 
      "{": [], 
@@ -504,9 +491,9 @@ module.exports = {table:
      "ORDER": [], 
      "$": [], 
      "}": []}, 
-  "*or([[ (,*dataBlockValue,)],NIL])" : {
-     "(": ["or([[ (,*dataBlockValue,)],NIL])","*or([[ (,*dataBlockValue,)],NIL])"], 
-     "NIL": ["or([[ (,*dataBlockValue,)],NIL])","*or([[ (,*dataBlockValue,)],NIL])"], 
+  "*or([[(,*dataBlockValue,)],NIL])" : {
+     "(": ["or([[(,*dataBlockValue,)],NIL])","*or([[(,*dataBlockValue,)],NIL])"], 
+     "NIL": ["or([[(,*dataBlockValue,)],NIL])","*or([[(,*dataBlockValue,)],NIL])"], 
      "}": []}, 
   "*or([[*,unaryExpression],[/,unaryExpression]])" : {
      "*": ["or([[*,unaryExpression],[/,unaryExpression]])","*or([[*,unaryExpression],[/,unaryExpression]])"], 
@@ -574,10 +561,10 @@ module.exports = {table:
      "COPY": [], 
      "CREATE": [], 
      "WITH": []}, 
-  "*or([var,[ (,expression,AS,var,)]])" : {
-     "(": ["or([var,[ (,expression,AS,var,)]])","*or([var,[ (,expression,AS,var,)]])"], 
-     "VAR1": ["or([var,[ (,expression,AS,var,)]])","*or([var,[ (,expression,AS,var,)]])"], 
-     "VAR2": ["or([var,[ (,expression,AS,var,)]])","*or([var,[ (,expression,AS,var,)]])"], 
+  "*or([var,[(,expression,AS,var,)]])" : {
+     "(": ["or([var,[(,expression,AS,var,)]])","*or([var,[(,expression,AS,var,)]])"], 
+     "VAR1": ["or([var,[(,expression,AS,var,)]])","*or([var,[(,expression,AS,var,)]])"], 
+     "VAR2": ["or([var,[(,expression,AS,var,)]])","*or([var,[(,expression,AS,var,)]])"], 
      "WHERE": [], 
      "{": [], 
      "FROM": []}, 
@@ -844,10 +831,10 @@ module.exports = {table:
      "IRI_REF": ["havingCondition","*havingCondition"], 
      "PNAME_LN": ["havingCondition","*havingCondition"], 
      "PNAME_NS": ["havingCondition","*havingCondition"]}, 
-  "+or([var,[ (,expression,AS,var,)]])" : {
-     "(": ["or([var,[ (,expression,AS,var,)]])","*or([var,[ (,expression,AS,var,)]])"], 
-     "VAR1": ["or([var,[ (,expression,AS,var,)]])","*or([var,[ (,expression,AS,var,)]])"], 
-     "VAR2": ["or([var,[ (,expression,AS,var,)]])","*or([var,[ (,expression,AS,var,)]])"]}, 
+  "+or([var,[(,expression,AS,var,)]])" : {
+     "(": ["or([var,[(,expression,AS,var,)]])","*or([var,[(,expression,AS,var,)]])"], 
+     "VAR1": ["or([var,[(,expression,AS,var,)]])","*or([var,[(,expression,AS,var,)]])"], 
+     "VAR2": ["or([var,[(,expression,AS,var,)]])","*or([var,[(,expression,AS,var,)]])"]}, 
   "+orderCondition" : {
      "ASC": ["orderCondition","*orderCondition"], 
      "DESC": ["orderCondition","*orderCondition"], 
@@ -1124,15 +1111,15 @@ module.exports = {table:
      ";": [], 
      ".": [], 
      "]": [], 
+     "}": [], 
+     "GRAPH": [], 
      "{": [], 
      "OPTIONAL": [], 
      "MINUS": [], 
-     "GRAPH": [], 
      "SERVICE": [], 
      "FILTER": [], 
      "BIND": [], 
-     "VALUES": [], 
-     "}": []}, 
+     "VALUES": []}, 
   "?[pathOneInPropertySet,*[|,pathOneInPropertySet]]" : {
      "a": ["[pathOneInPropertySet,*[|,pathOneInPropertySet]]"], 
      "^": ["[pathOneInPropertySet,*[|,pathOneInPropertySet]]"], 
@@ -1152,25 +1139,6 @@ module.exports = {table:
      "CREATE": ["[update1,?[;,update]]"], 
      "WITH": ["[update1,?[;,update]]"], 
      "$": []}, 
-  "?[verb,objectList]" : {
-     "a": ["[verb,objectList]"], 
-     "VAR1": ["[verb,objectList]"], 
-     "VAR2": ["[verb,objectList]"], 
-     "IRI_REF": ["[verb,objectList]"], 
-     "PNAME_LN": ["[verb,objectList]"], 
-     "PNAME_NS": ["[verb,objectList]"], 
-     ";": [], 
-     ".": [], 
-     "]": [], 
-     "}": [], 
-     "GRAPH": [], 
-     "{": [], 
-     "OPTIONAL": [], 
-     "MINUS": [], 
-     "SERVICE": [], 
-     "FILTER": [], 
-     "BIND": [], 
-     "VALUES": []}, 
   "?argList" : {
      "NIL": ["argList"], 
      "(": ["argList"], 
@@ -1291,10 +1259,10 @@ module.exports = {table:
      "INTEGER_NEGATIVE": [], 
      "DECIMAL_NEGATIVE": [], 
      "DOUBLE_NEGATIVE": [], 
-     "a": [], 
      "VAR1": [], 
      "VAR2": [], 
      "^": [], 
+     "a": [], 
      "!": [], 
      "(": [], 
      ".": [], 
@@ -1483,18 +1451,18 @@ module.exports = {table:
      "OFFSET": [], 
      "VALUES": [], 
      "$": []}, 
-  "[ (,*dataBlockValue,)]" : {
-     "(": ["(","*dataBlockValue",")"]}, 
-  "[ (,*var,)]" : {
-     "(": ["(","*var",")"]}, 
-  "[ (,expression,)]" : {
-     "(": ["(","expression",")"]}, 
-  "[ (,expression,AS,var,)]" : {
-     "(": ["(","expression","AS","var",")"]}, 
   "[!=,numericExpression]" : {
      "!=": ["!=","numericExpression"]}, 
   "[&&,valueLogical]" : {
      "&&": ["&&","valueLogical"]}, 
+  "[(,*dataBlockValue,)]" : {
+     "(": ["(","*dataBlockValue",")"]}, 
+  "[(,*var,)]" : {
+     "(": ["(","*var",")"]}, 
+  "[(,expression,)]" : {
+     "(": ["(","expression",")"]}, 
+  "[(,expression,AS,var,)]" : {
+     "(": ["(","expression","AS","var",")"]}, 
   "[*,unaryExpression]" : {
      "*": ["*","unaryExpression"]}, 
   "[*datasetClause,WHERE,{,?triplesTemplate,},solutionModifier]" : {
@@ -1526,8 +1494,6 @@ module.exports = {table:
      "/": ["/","unaryExpression"]}, 
   "[;,?[or([verbPath,verbSimple]),objectList]]" : {
      ";": [";","?[or([verbPath,verbSimple]),objectList]"]}, 
-  "[;,?[verb,objectList]]" : {
-     ";": [";","?[verb,objectList]"]}, 
   "[;,SEPARATOR,=,string]" : {
      ";": [";","SEPARATOR","=","string"]}, 
   "[;,update]" : {
@@ -1609,13 +1575,6 @@ module.exports = {table:
      "COPY": ["update1","?[;,update]"], 
      "CREATE": ["update1","?[;,update]"], 
      "WITH": ["update1","?[;,update]"]}, 
-  "[verb,objectList]" : {
-     "a": ["verb","objectList"], 
-     "VAR1": ["verb","objectList"], 
-     "VAR2": ["verb","objectList"], 
-     "IRI_REF": ["verb","objectList"], 
-     "PNAME_LN": ["verb","objectList"], 
-     "PNAME_NS": ["verb","objectList"]}, 
   "[|,pathOneInPropertySet]" : {
      "|": ["|","pathOneInPropertySet"]}, 
   "[|,pathSequence]" : {
@@ -1751,7 +1710,7 @@ module.exports = {table:
      "BOUND": ["BOUND","(","var",")"], 
      "IRI": ["IRI","(","expression",")"], 
      "URI": ["URI","(","expression",")"], 
-     "BNODE": ["BNODE","or([[ (,expression,)],NIL])"], 
+     "BNODE": ["BNODE","or([[(,expression,)],NIL])"], 
      "RAND": ["RAND","NIL"], 
      "ABS": ["ABS","(","expression",")"], 
      "CEIL": ["CEIL","(","expression",")"], 
@@ -2529,8 +2488,8 @@ module.exports = {table:
   "inlineData" : {
      "VALUES": ["VALUES","dataBlock"]}, 
   "inlineDataFull" : {
-     "NIL": ["or([NIL,[ (,*var,)]])","{","*or([[ (,*dataBlockValue,)],NIL])","}"], 
-     "(": ["or([NIL,[ (,*var,)]])","{","*or([[ (,*dataBlockValue,)],NIL])","}"]}, 
+     "NIL": ["or([NIL,[(,*var,)]])","{","*or([[(,*dataBlockValue,)],NIL])","}"], 
+     "(": ["or([NIL,[(,*var,)]])","{","*or([[(,*dataBlockValue,)],NIL])","}"]}, 
   "inlineDataOneVar" : {
      "VAR1": ["var","{","*dataBlockValue","}"], 
      "VAR2": ["var","{","*dataBlockValue","}"]}, 
@@ -2955,10 +2914,10 @@ module.exports = {table:
      "DOUBLE_NEGATIVE": ["expression"], 
      "PNAME_LN": ["expression"], 
      "PNAME_NS": ["expression"]}, 
-  "or([+or([var,[ (,expression,AS,var,)]]),*])" : {
-     "(": ["+or([var,[ (,expression,AS,var,)]])"], 
-     "VAR1": ["+or([var,[ (,expression,AS,var,)]])"], 
-     "VAR2": ["+or([var,[ (,expression,AS,var,)]])"], 
+  "or([+or([var,[(,expression,AS,var,)]]),*])" : {
+     "(": ["+or([var,[(,expression,AS,var,)]])"], 
+     "VAR1": ["+or([var,[(,expression,AS,var,)]])"], 
+     "VAR2": ["+or([var,[(,expression,AS,var,)]])"], 
      "*": ["*"]}, 
   "or([+varOrIRIref,*])" : {
      "VAR1": ["+varOrIRIref"], 
@@ -2976,14 +2935,14 @@ module.exports = {table:
   "or([LANGTAG,[^^,iriRef]])" : {
      "LANGTAG": ["LANGTAG"], 
      "^^": ["[^^,iriRef]"]}, 
-  "or([NIL,[ (,*var,)]])" : {
+  "or([NIL,[(,*var,)]])" : {
      "NIL": ["NIL"], 
-     "(": ["[ (,*var,)]"]}, 
-  "or([[ (,*dataBlockValue,)],NIL])" : {
-     "(": ["[ (,*dataBlockValue,)]"], 
+     "(": ["[(,*var,)]"]}, 
+  "or([[(,*dataBlockValue,)],NIL])" : {
+     "(": ["[(,*dataBlockValue,)]"], 
      "NIL": ["NIL"]}, 
-  "or([[ (,expression,)],NIL])" : {
-     "(": ["[ (,expression,)]"], 
+  "or([[(,expression,)],NIL])" : {
+     "(": ["[(,expression,)]"], 
      "NIL": ["NIL"]}, 
   "or([[*,unaryExpression],[/,unaryExpression]])" : {
      "*": ["[*,unaryExpression]"], 
@@ -3106,10 +3065,10 @@ module.exports = {table:
      "DECIMAL_NEGATIVE": ["groupGraphPatternSub"], 
      "DOUBLE_NEGATIVE": ["groupGraphPatternSub"], 
      "}": ["groupGraphPatternSub"]}, 
-  "or([var,[ (,expression,AS,var,)]])" : {
+  "or([var,[(,expression,AS,var,)]])" : {
      "VAR1": ["var"], 
      "VAR2": ["var"], 
-     "(": ["[ (,expression,AS,var,)]"]}, 
+     "(": ["[(,expression,AS,var,)]"]}, 
   "or([verbPath,verbSimple])" : {
      "^": ["verbPath"], 
      "a": ["verbPath"], 
@@ -3359,9 +3318,12 @@ module.exports = {table:
      "CREATE": ["*or([baseDecl,prefixDecl])"], 
      "WITH": ["*or([baseDecl,prefixDecl])"]}, 
   "propertyList" : {
-     "a": ["propertyListNotEmpty"], 
      "VAR1": ["propertyListNotEmpty"], 
      "VAR2": ["propertyListNotEmpty"], 
+     "^": ["propertyListNotEmpty"], 
+     "a": ["propertyListNotEmpty"], 
+     "!": ["propertyListNotEmpty"], 
+     "(": ["propertyListNotEmpty"], 
      "IRI_REF": ["propertyListNotEmpty"], 
      "PNAME_LN": ["propertyListNotEmpty"], 
      "PNAME_NS": ["propertyListNotEmpty"], 
@@ -3369,16 +3331,22 @@ module.exports = {table:
      "}": [], 
      "GRAPH": []}, 
   "propertyListNotEmpty" : {
-     "a": ["verb","objectList","*[;,?[verb,objectList]]"], 
-     "VAR1": ["verb","objectList","*[;,?[verb,objectList]]"], 
-     "VAR2": ["verb","objectList","*[;,?[verb,objectList]]"], 
-     "IRI_REF": ["verb","objectList","*[;,?[verb,objectList]]"], 
-     "PNAME_LN": ["verb","objectList","*[;,?[verb,objectList]]"], 
-     "PNAME_NS": ["verb","objectList","*[;,?[verb,objectList]]"]}, 
+     "VAR1": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "VAR2": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "^": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "a": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "!": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "(": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "IRI_REF": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "PNAME_LN": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"], 
+     "PNAME_NS": ["or([verbPath,verbSimple])","objectList","*[;,?[or([verbPath,verbSimple]),objectList]]"]}, 
   "propertyListPath" : {
-     "a": ["propertyListNotEmpty"], 
      "VAR1": ["propertyListNotEmpty"], 
      "VAR2": ["propertyListNotEmpty"], 
+     "^": ["propertyListNotEmpty"], 
+     "a": ["propertyListNotEmpty"], 
+     "!": ["propertyListNotEmpty"], 
+     "(": ["propertyListNotEmpty"], 
      "IRI_REF": ["propertyListNotEmpty"], 
      "PNAME_LN": ["propertyListNotEmpty"], 
      "PNAME_NS": ["propertyListNotEmpty"], 
@@ -3539,7 +3507,7 @@ module.exports = {table:
      "PNAME_LN": ["numericExpression","?or([[=,numericExpression],[!=,numericExpression],[<,numericExpression],[>,numericExpression],[<=,numericExpression],[>=,numericExpression],[IN,expressionList],[NOT,IN,expressionList]])"], 
      "PNAME_NS": ["numericExpression","?or([[=,numericExpression],[!=,numericExpression],[<,numericExpression],[>,numericExpression],[<=,numericExpression],[>=,numericExpression],[IN,expressionList],[NOT,IN,expressionList]])"]}, 
   "selectClause" : {
-     "SELECT": ["SELECT","?or([DISTINCT,REDUCED])","or([+or([var,[ (,expression,AS,var,)]]),*])"]}, 
+     "SELECT": ["SELECT","?or([DISTINCT,REDUCED])","or([+or([var,[(,expression,AS,var,)]]),*])"]}, 
   "selectQuery" : {
      "SELECT": ["selectClause","*datasetClause","whereClause","solutionModifier"]}, 
   "serviceGraphPattern" : {
@@ -3576,8 +3544,6 @@ module.exports = {table:
      "BASE": ["prologue","or([queryAll,updateAll])","$"], 
      "PREFIX": ["prologue","or([queryAll,updateAll])","$"]}, 
   "storeProperty" : {
-     "VAR1": [], 
-     "VAR2": [], 
      "IRI_REF": [], 
      "PNAME_LN": [], 
      "PNAME_NS": [], 
@@ -3951,13 +3917,6 @@ module.exports = {table:
      "INTEGER_NEGATIVE": ["graphTerm"], 
      "DECIMAL_NEGATIVE": ["graphTerm"], 
      "DOUBLE_NEGATIVE": ["graphTerm"]}, 
-  "verb" : {
-     "VAR1": ["storeProperty","varOrIRIref"], 
-     "VAR2": ["storeProperty","varOrIRIref"], 
-     "IRI_REF": ["storeProperty","varOrIRIref"], 
-     "PNAME_LN": ["storeProperty","varOrIRIref"], 
-     "PNAME_NS": ["storeProperty","varOrIRIref"], 
-     "a": ["storeProperty","a"]}, 
   "verbPath" : {
      "^": ["path"], 
      "a": ["path"], 
