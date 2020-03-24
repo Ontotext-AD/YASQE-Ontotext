@@ -69,7 +69,7 @@ constructQuery ==>
 	 [*(datasetClause),'WHERE','{',?(triplesTemplate),'}',solutionModifier]].
 
 describeQuery ==> 
-	['DESCRIBE',+(varOrIRIref) or '*',
+	['DESCRIBE',+(varOrIRIref or embeddedTriple) or '*',
 	*(describeDatasetClause),?(whereClause),solutionModifier].
 
 askQuery ==>
