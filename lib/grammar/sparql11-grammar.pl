@@ -301,6 +301,8 @@ dataBlockValue ==> [iriRef].
 dataBlockValue ==> [rdfLiteral].
 dataBlockValue ==> [numericLiteral].
 dataBlockValue ==> [booleanLiteral].
+% SPARQL* extension
+dataBlockValue ==> [disallowVars,embeddedTriple,allowVars].
 dataBlockValue ==> ['UNDEF'].
 
 %[66]
@@ -470,6 +472,8 @@ graphTerm ==> [rdfLiteral].
 graphTerm ==> [numericLiteral].
 graphTerm ==> [booleanLiteral].
 graphTerm ==> [blankNode].
+% SPARQL* extension
+graphTerm ==> [embeddedTriple].
 graphTerm ==> ['NIL'].
 %[110]
 expression ==> [conditionalOrExpression].
@@ -516,6 +520,8 @@ primaryExpression ==> [iriRefOrFunction].
 primaryExpression ==> [rdfLiteral].
 primaryExpression ==> [numericLiteral].
 primaryExpression ==> [booleanLiteral].
+% SPARQL* extension
+primaryExpression ==> [embeddedTriple].
 primaryExpression ==> [var].
 primaryExpression ==> [aggregate].
 %[120]
@@ -643,7 +649,8 @@ prefixedName ==> ['PNAME_NS'].
 %[138]
 blankNode ==> ['BLANK_NODE_LABEL'].
 blankNode ==> ['ANON'].
-
+% SPARQL* extension
+embeddedTriple ==> ['<<',varOrTerm,verb,varOrTerm,'>>'].
 
 % tokens defined by regular expressions elsewhere
 tm_regex([
@@ -794,7 +801,11 @@ tm_keywords([
 'SAMPLE',
 'SEPARATOR',
 
-'STR'
+'STR',
+
+% SPARQL* extension
+'<<',
+'>>'
 ]).
 
 % Other tokens representing fixed, case sensitive, strings
