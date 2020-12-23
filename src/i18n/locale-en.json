@@ -1,0 +1,8 @@
+{
+  "yasqe.invalid.line": "This line is invalid. Expected: ",
+  "yasqe.btn.title.fullscreen": "Set editor full screen",
+  "yasqe.btn.title.normalsize": "Set editor to normal size",
+  "yasqe.btn.title.share": "Share your query",
+  "yasqe.btn.lbl.curl": "CURL",
+  "yasqe.btn.lbl.shorten": "Shorten"
+}
