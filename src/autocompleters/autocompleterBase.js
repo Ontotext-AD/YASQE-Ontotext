@@ -228,14 +228,16 @@ module.exports = function (YASQE, yasqe) {
 	var getSuggestionsAsHintObject = function (suggestions, completer, token) {
 		var hintList = [];
 		for (var i = 0; i < suggestions.length; i++) {
-			var suggestedString = suggestions[i];
-			if (completer.postProcessToken) {
+			var suggestion = suggestions[i];
+
+			var suggestedString = suggestion.value;
+			var displayTextVar = suggestion.description;
+
+			if (suggestion.type === 'prefix') {
+				suggestedString = suggestedString + ":";
+			} else if (completer.postProcessToken) {
 				suggestedString = completer.postProcessToken(token, suggestedString);
 			}
-
-			var displayTextVar = replaceAll(replaceAll(suggestedString, "<", "&lt;"), ">", "&gt;");
-			displayTextVar = replaceAll(replaceAll(displayTextVar, "&lt;b&gt;", "<span class='CodeMirror-highlight'>"), "&lt;/b&gt;", "</span>");
-			suggestedString = replaceAll(replaceAll(suggestedString, "<b>", ""), "</b>", "");
 
 			if (!(suggestedString.startsWith("<") && suggestedString.endsWith(">")) && suggestedString.indexOf(":") > 0) {
 				var prefixSplit = suggestedString.indexOf(":");
