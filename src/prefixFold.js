@@ -15,7 +15,7 @@ module.exports = {
 }
 
 function findFirstPrefix(cm, line, ch, lineText) {
-	if (lineText.charAt(0) === "#" || (lineText.startsWith('"') && lineText.endsWith('"'))) return;
+	if (lineText && (lineText.charAt(0) === "#" || (lineText.startsWith('"') && lineText.endsWith('"')))) return;
 	if (!ch) ch = 0;
 	if (!lineText) lineText = cm.getLine(line);
 	lineText = lineText.toUpperCase();
@@ -50,6 +50,9 @@ function findFirstPrefix(cm, line, ch, lineText) {
 }
 
 CodeMirror.registerHelper("fold", "prefix", function(cm, start) {
+	if (!start) {
+		return;
+	}
 	var line = start.line,
 		lineText = cm.getLine(line);
 
