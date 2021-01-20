@@ -230,6 +230,10 @@ module.exports = function (YASQE, yasqe) {
 		for (var i = 0; i < suggestions.length; i++) {
 			var suggestion = suggestions[i];
 
+			if (!suggestion.value) {
+				continue;
+			}
+
 			var suggestedString = suggestion.value;
 			var displayTextVar = suggestion.description;
 

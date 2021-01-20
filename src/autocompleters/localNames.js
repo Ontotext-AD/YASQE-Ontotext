@@ -56,7 +56,9 @@ module.exports.fetchAutocomplete = function (yasqe, token, callback) {
             if (204 === jqXHR.status && !yasqe.fromAutoShow) {
                 yasqe.toastBuildIndex();
             } else {
-                callback(data.suggestions);
+                if (data) {
+                    callback(data.suggestions);
+                }
             }
         },
         dataType: 'json',
