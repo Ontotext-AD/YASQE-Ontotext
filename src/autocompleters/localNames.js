@@ -53,10 +53,12 @@ module.exports.fetchAutocomplete = function (yasqe, token, callback) {
         url: 'rest/autocomplete/query',
         data: {q: query},
         success: function (data, textStatus, jqXHR) {
-            if (204 === jqXHR.status && (!yasqe.fromAutoShow || !data)) {
+            if (204 === jqXHR.status && !yasqe.fromAutoShow) {
                 yasqe.toastBuildIndex();
             } else {
-                callback(data.suggestions);
+                if (data) {
+                    callback(data.suggestions);
+                }
             }
         },
         dataType: 'json',
