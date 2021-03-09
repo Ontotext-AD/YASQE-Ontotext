@@ -482,13 +482,13 @@
     font-weight: bold;
     float: left; }
   .yasqe .completionNotification {
-    color: #999;
     background-color: #f7f7f7;
     position: absolute;
     padding: 0px 5px;
     right: 0px;
     bottom: 0px;
-    font-size: 90%; }
+    font-size: 90%;
+    z-index: 10; }
   .yasqe .parseErrorIcon {
     width: 15px;
     height: 15px; }

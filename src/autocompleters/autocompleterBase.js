@@ -297,6 +297,7 @@ module.exports = function (YASQE, yasqe) {
 				//only draw when the user needs to use a keypress to summon autocompletions
 				if (!completer.autoshow) {
 					if (!completionNotifications[completer.name]) completionNotifications[completer.name] = $("<div class='completionNotification'></div>");
+					$('#keyboardShortcuts').hide();
 					completionNotifications[completer.name]
 						.show()
 						.text("Press Alt+Enter to autocomplete")
@@ -306,6 +307,7 @@ module.exports = function (YASQE, yasqe) {
 			hide: function (yasqe, completer) {
 				if (completionNotifications[completer.name]) {
 					completionNotifications[completer.name].hide();
+					$('#keyboardShortcuts').show();
 				}
 			}
 
