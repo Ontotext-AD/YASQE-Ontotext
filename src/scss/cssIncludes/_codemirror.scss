@@ -3,7 +3,7 @@
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */
   font-family: monospace;
-  height: 300px;
+  height: 330px;
   color: black;
 }
 
@@ -63,20 +63,15 @@
   width: auto;
   border: 0;
   -webkit-animation: blink 1.06s steps(1) infinite;
-  -moz-animation: blink 1.06s steps(1) infinite;
   animation: blink 1.06s steps(1) infinite;
   background-color: #7e7;
-}
-@-moz-keyframes blink {
-  0% {}
-  50% { background-color: transparent; }
-  100% {}
 }
 @-webkit-keyframes blink {
   0% {}
   50% { background-color: transparent; }
   100% {}
 }
+
 @keyframes blink {
   0% {}
   50% { background-color: transparent; }
@@ -244,6 +239,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
   font-family: inherit;
   font-size: inherit;
   margin: 0;
+  padding-left: 50px;
   white-space: pre;
   word-wrap: normal;
   line-height: inherit;

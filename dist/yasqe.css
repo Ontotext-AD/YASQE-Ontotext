@@ -22,7 +22,7 @@
   .yasqe .CodeMirror {
     /* Set height, width, borders, and global font properties here */
     font-family: monospace;
-    height: 300px;
+    height: 330px;
     color: black; }
   .yasqe .CodeMirror-lines {
     padding: 4px 0;
@@ -232,6 +232,7 @@
     font-family: inherit;
     font-size: inherit;
     margin: 0;
+    padding-left: 50px;
     white-space: pre;
     word-wrap: normal;
     line-height: inherit;
@@ -324,7 +325,7 @@
     line-height: .3;
     cursor: pointer; }
   .yasqe .CodeMirror-foldgutter {
-    width: .7em; }
+    width: 2em; }
   .yasqe .CodeMirror-foldgutter-open,
   .yasqe .CodeMirror-foldgutter-folded {
     cursor: pointer; }
@@ -482,6 +483,7 @@
     font-weight: bold;
     float: left; }
   .yasqe .completionNotification {
+    color: #999;
     background-color: #f7f7f7;
     position: absolute;
     padding: 0px 5px;

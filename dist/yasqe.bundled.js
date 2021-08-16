@@ -26045,7 +26045,7 @@ function createStore(storages, plugins, namespace) {
 }
 
 },{"./util":21}],21:[function(require,module,exports){
-(function (global){
+(function (global){(function (){
 var assign = make_assign()
 var create = make_create()
 var trim = make_trim()
@@ -26165,7 +26165,7 @@ function isObject(val) {
 	return val && {}.toString.call(val) === '[object Object]'
 }
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
 },{}],22:[function(require,module,exports){
 module.exports = [
@@ -26537,43 +26537,40 @@ function clearAll() {
 
 },{"../src/util":21}],29:[function(require,module,exports){
 module.exports={
-  "_args": [
-    [
-      "yasgui-utils@1.6.7",
-      "/ssd/IntelliJProjects/YASQE-Ontotext"
-    ]
-  ],
-  "_from": "yasgui-utils@1.6.7",
+  "_from": "yasgui-utils@^1.6.0",
   "_id": "yasgui-utils@1.6.7",
   "_inBundle": false,
   "_integrity": "sha1-K8/FoxVojeOuYFeIPZrjQrIF8mc=",
   "_location": "/yasgui-utils",
   "_phantomChildren": {},
   "_requested": {
-    "type": "version",
+    "type": "range",
     "registry": true,
-    "raw": "yasgui-utils@1.6.7",
+    "raw": "yasgui-utils@^1.6.0",
     "name": "yasgui-utils",
     "escapedName": "yasgui-utils",
-    "rawSpec": "1.6.7",
+    "rawSpec": "^1.6.0",
     "saveSpec": null,
-    "fetchSpec": "1.6.7"
+    "fetchSpec": "^1.6.0"
   },
   "_requiredBy": [
     "/"
   ],
   "_resolved": "https://registry.npmjs.org/yasgui-utils/-/yasgui-utils-1.6.7.tgz",
-  "_spec": "1.6.7",
-  "_where": "/ssd/IntelliJProjects/YASQE-Ontotext",
+  "_shasum": "2bcfc5a315688de3ae6057883d9ae342b205f267",
+  "_spec": "yasgui-utils@^1.6.0",
+  "_where": "/home/onto/Desktop/testgit/YASQE-Ontotext",
   "author": {
     "name": "Laurens Rietveld"
   },
   "bugs": {
     "url": "https://github.com/YASGUI/Utils/issues"
   },
+  "bundleDependencies": false,
   "dependencies": {
     "store": "^2.0.4"
   },
+  "deprecated": false,
   "description": "Utils for YASGUI libs",
   "homepage": "https://github.com/YASGUI/Utils",
   "licenses": [
@@ -29450,9 +29447,7 @@ var getCompleteToken = function(yasqe, token, cur) {
 		ch: token.start
 	});
 	// not start of line, and not whitespace
-	if (
-		prevToken.type != null && prevToken.type != "ws" && token.type != null && token.type != "ws"
-	) {
+	if (prevToken.type != null && prevToken.type != "ws" && prevToken.type != "punc" && token.type != null && token.type != "ws") {
 		token.start = prevToken.start;
 		token.string = prevToken.string + token.string;
 		return getCompleteToken(yasqe, token, {
