@@ -22,47 +22,45 @@
   	}
 
   	.completionNotification {
-  		color: #999;
+		color: #999;
   		background-color: #f7f7f7;
   		position: absolute;
   		padding: 0px 5px;
   		right: 0px;
   		bottom: 0px;
   		font-size: 90%;
+	  	z-index: 10;
   	}
 
+	.parseErrorIcon {
+		width: 15px;
+		height: 15px;
+	}
 
-
-
-    	.parseErrorIcon {
-    		width: 15px;
-    		height: 15px;
-    	}
-
-    	.yasqe_tooltip{
-    		display: inline;
-    	    position: absolute;
-    	    background: #333;
-    	    background: rgba(0,0,0,.8);
-    	    border-radius: 5px;
-    	    bottom: 26px;
-    	    color: #fff;
-    	    left: 20%;
-    	    padding: 5px 15px;
-    	    position: absolute;
-    	    width: 220px;
-    	    white-space: -moz-pre-wrap !important;
-    	    /* Mozilla, since 1999 */
-    	    white-space: -pre-wrap;
-    	    /* Opera 4-6 */
-    	    white-space: -o-pre-wrap;
-    	    /* Opera 7 */
-    	    white-space: pre-wrap;
-    	    /* css-3 */
-    	    white-space: normal;
-    	}
-    	.notificationLoader {
-    		width: 18px;
-    		height: 18px;
-    		vertical-align: middle;
-    	}
+	.yasqe_tooltip{
+		display: inline;
+		position: absolute;
+		background: #333;
+		background: rgba(0,0,0,.8);
+		border-radius: 5px;
+		bottom: 26px;
+		color: #fff;
+		left: 20%;
+		padding: 5px 15px;
+		position: absolute;
+		width: 220px;
+		white-space: -moz-pre-wrap !important;
+		/* Mozilla, since 1999 */
+		white-space: -pre-wrap;
+		/* Opera 4-6 */
+		white-space: -o-pre-wrap;
+		/* Opera 7 */
+		white-space: pre-wrap;
+		/* css-3 */
+		white-space: normal;
+	}
+	.notificationLoader {
+		width: 18px;
+		height: 18px;
+		vertical-align: middle;
+	}

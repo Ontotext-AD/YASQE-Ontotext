@@ -15,7 +15,7 @@ module.exports = {
 }
 
 function findFirstPrefix(cm, line, ch, lineText) {
-	if (lineText.charAt(0) === "#" || (lineText.startsWith('"') && lineText.endsWith('"'))) return;
+	if (lineText && (lineText.charAt(0) === "#" || (lineText.startsWith('"') && lineText.endsWith('"')))) return;
 	if (!ch) ch = 0;
 	if (!lineText) lineText = cm.getLine(line);
 	lineText = lineText.toUpperCase();
@@ -42,7 +42,7 @@ function findFirstPrefix(cm, line, ch, lineText) {
 		if (found > 0 && lineText.charAt(found - 1) === ":")
 		    // :PREFIX freeze bug, See GDB-2408
 		    return;
-		tokenType = cm.getTokenTypeAt(CodeMirror.Pos(line, found + 1));
+		var tokenType = cm.getTokenTypeAt(CodeMirror.Pos(line, found + 1));
 		if (!/^(comment|string)/.test(tokenType))
 			return found + 1;
 		at = found - 1;
@@ -50,6 +50,9 @@ function findFirstPrefix(cm, line, ch, lineText) {
 }
 
 CodeMirror.registerHelper("fold", "prefix", function(cm, start) {
+	if (!start) {
+		return;
+	}
 	var line = start.line,
 		lineText = cm.getLine(line);
 
