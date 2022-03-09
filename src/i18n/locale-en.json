@@ -4,5 +4,9 @@
   "yasqe.btn.title.normalsize": "Set editor to normal size",
   "yasqe.btn.title.share": "Share your query",
   "yasqe.btn.lbl.curl": "CURL",
-  "yasqe.btn.lbl.shorten": "Shorten"
+  "yasqe.btn.lbl.shorten": "Shorten",
+  "yasqe.autocompleterBase.message": "Press Alt+Enter to autocomplete",
+  "yasqe.utils.message1": "Nothing to autocomplete yet!",
+  "yasqe.utils.message2": "0 matches found...",
+  "yasqe.utils.message3": "Failed fetching suggestions.."
 }

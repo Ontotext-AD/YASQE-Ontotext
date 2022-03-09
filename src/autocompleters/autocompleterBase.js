@@ -12,6 +12,9 @@ module.exports = function (YASQE, yasqe) {
 	// introduce a flag to not trigger continuous completion always
 	var completionTriggeredFlag = false;
 
+	// load and register the translation service providing the locale config
+	yasqe.translate = require('./translate.js')(yasqe.options.locale);
+
 	yasqe.on('cursorActivity', function (yasqe, eventInfo) {
 		autoComplete(true);
 	});
@@ -46,13 +49,13 @@ module.exports = function (YASQE, yasqe) {
 	});
 
 
-
 	/**
 	 * Store bulk completions in memory as trie, and store these in localstorage as well (if enabled)
 	 * 
 	 * @method doc.storeBulkCompletions
 	 * @param completions {array}
 	 */
+
 	var storeBulkCompletions = function (completer, completions) {
 		// store array as trie
 		tries[completer.name] = new Trie();
@@ -63,6 +66,7 @@ module.exports = function (YASQE, yasqe) {
 		var storageId = utils.getPersistencyId(yasqe, completer.persistent);
 		if (storageId) yutils.storage.set(storageId, completions, "month");
 	};
+
 
 	var initCompleter = function (name, completionInit) {
 		var completer = completers[name] = new completionInit(yasqe, name);
@@ -300,8 +304,10 @@ module.exports = function (YASQE, yasqe) {
 					$('#keyboardShortcuts').hide();
 					completionNotifications[completer.name]
 						.show()
-						.text("Press Alt+Enter to autocomplete")
+						.text(yasqe.translate('yasqe.autocompleterBase.message'))
 						.appendTo($(yasqe.getWrapperElement()));
+
+
 				}
 			},
 			hide: function (yasqe, completer) {
