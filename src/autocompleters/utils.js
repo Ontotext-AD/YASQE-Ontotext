@@ -21,6 +21,8 @@ var preprocessResourceTokenForCompletion = function (yasqe, token) {
 			token.tokenPrefixUri = queryPrefixes[token.tokenPrefix.slice(0, -1)];
 		}
 	}
+// load and register the translation service providing the locale config
+yasqe.translate = require('./translate.js')(yasqe.options.locale);
 
 	token.autocompletionString = token.string.trim();
 	if (!token.string.indexOf("<") == 0 && token.string.indexOf(":") > -1) {
@@ -71,7 +73,8 @@ var fetchFromLov = function (yasqe, completer, token, callback) {
 	if (!token || !token.string || token.string.trim().length == 0) {
 		yasqe.autocompleters.notifications.getEl(completer)
 			.empty()
-			.append("Nothing to autocomplete yet!");
+			.append(yasqe.translate("yasqe.utils.message1"));
+
 		return false;
 	}
 	var maxResults = 50;
@@ -115,7 +118,7 @@ var fetchFromLov = function (yasqe, completer, token, callback) {
 					if (results.length > 0) {
 						yasqe.autocompleters.notifications.hide(yasqe, completer);
 					} else {
-						yasqe.autocompleters.notifications.getEl(completer).text("0 matches found...");
+						yasqe.autocompleters.notifications.getEl(completer).text(yasqe.translate("yasqe.utils.message2"));
 					}
 					callback(results);
 					// requests done! Don't call this function again
@@ -123,7 +126,7 @@ var fetchFromLov = function (yasqe, completer, token, callback) {
 			}).fail(function (jqXHR, textStatus, errorThrown) {
 				yasqe.autocompleters.notifications.getEl(completer)
 					.empty()
-					.append("Failed fetching suggestions..");
+					.append(yasqe.translate("yasqe.utils.message3"));
 
 			});
 	};
