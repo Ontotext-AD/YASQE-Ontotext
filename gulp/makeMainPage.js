@@ -3,7 +3,7 @@ var gulp = require('gulp'),
 	jsValidate = require('gulp-jsvalidate'),
 	source = require('vinyl-source-stream'),
 	embedlr = require('gulp-embedlr'),
-	minifyCSS = require('gulp-cssnano');
+	minifyCSS = require('gulp-cssnano'),
 	uglify = require("gulp-uglify"),
 	sass = require('gulp-sass'),
 	buffer = require("vinyl-buffer"),
@@ -22,11 +22,12 @@ gulp.task('makeMainPageJs', function() {
 gulp.task('makeMainPageCss', function() {
 	return gulp.src(['./doc/main.scss'])
 	.pipe(sass())
+	.on("error", notify.onError(function(error) {
+		return error.message;
+	}))
 	.pipe(minifyCSS())
   	.pipe(concat('doc.min.css'))
-    .pipe(gulp.dest("doc"))
-    ;
-
+    .pipe(gulp.dest("doc"));
 });
 
 gulp.task('makeMainPage', ['makeMainPageJs', 'makeMainPageCss']);
