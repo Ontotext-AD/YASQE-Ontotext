@@ -1,0 +1,12 @@
+{
+   "yasqe.invalid.line": "Cette ligne n'est pas valide. Attendu:",
+   "yasqe.btn.title.fullscreen": "Configurer l'éditeur en plein écran",
+   "yasqe.btn.title.normalsize": "Configurer l'éditeur à la taille normale",
+   "yasqe.btn.title.share": "Partagez votre requête",
+   "yasqe.btn.lbl.curl": "CURL",
+   "yasqe.btn.lbl.shorten": "Raccourcir",
+   "yasqe.autocompleterBase.message": "Appuyez sur Alt+Enter pour l'autocomplétion.",
+   "yasqe.utils.message1": "Rien à autocompléter encore !",
+   "yasqe.utils.message2": "0 correspondances trouvées ...",
+   "yasqe.utils.message3": "Échec de la récupération des suggestions..."
+} 
