@@ -75,7 +75,7 @@ var extendConfig = function (config) {
  */
 var extendCmInstance = function (yasqe) {
     // load and register the translation service providing the locale config
-    yasqe.translate = require('./translate.js')(yasqe.options.locale);
+    yasqe.translate = require('./translate.js')(yasqe);
 
 	//instantiate autocompleters
 	yasqe.autocompleters = require('./autocompleters/autocompleterBase.js')(root, yasqe);
@@ -256,6 +256,11 @@ var postProcessCmElement = function (yasqe) {
 		checkSyntax(yasqe);
 		root.updateQueryButton(yasqe);
 		root.positionButtons(yasqe);
+	});
+
+	yasqe.on('language-changed', function () {
+		checkSyntax(yasqe);
+		root.drawButtons(yasqe);
 	});
 
 	yasqe.on('cursorActivity', function (yasqe, eventInfo) {

@@ -20,9 +20,13 @@ var translate = function (key) {
     return translation;
 };
 
-function init(lang) {
-    if (lang) {
-        currentLang = lang;
+function init(yasqe) {
+    yasqe.on("language-changed", function () {
+        currentLang = yasqe.options.locale;
+    });
+
+    if (yasqe.options.locale) {
+        currentLang = yasqe.options.locale;
     }
     return translate;
 }

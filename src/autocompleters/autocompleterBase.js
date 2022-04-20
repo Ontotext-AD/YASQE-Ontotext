@@ -13,7 +13,7 @@ module.exports = function (YASQE, yasqe) {
 	var completionTriggeredFlag = false;
 
 	// load and register the translation service providing the locale config
-	yasqe.translate = require('../translate.js')(yasqe.options.locale);
+	yasqe.translate = require('../translate.js')(yasqe);
 
 	yasqe.on('cursorActivity', function (yasqe, eventInfo) {
 		autoComplete(true);

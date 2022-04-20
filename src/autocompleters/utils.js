@@ -22,7 +22,7 @@ var preprocessResourceTokenForCompletion = function (yasqe, token) {
 		}
 	}
 // load and register the translation service providing the locale config
-yasqe.translate = require('../translate.js')(yasqe.options.locale);
+yasqe.translate = require('../translate.js')(yasqe);
 
 	token.autocompletionString = token.string.trim();
 	if (!token.string.indexOf("<") == 0 && token.string.indexOf(":") > -1) {
