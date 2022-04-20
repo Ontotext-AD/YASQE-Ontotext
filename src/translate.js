@@ -1,6 +1,6 @@
 const bundle = {
     "en": require('./i18n/locale-en'),
-    "de": require('./i18n/locale-de')
+    "fr": require('./i18n/locale-fr')
 };
 const DEFAULT_LANG = 'en';
 var currentLang = DEFAULT_LANG;
