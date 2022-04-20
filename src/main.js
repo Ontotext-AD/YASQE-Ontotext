@@ -261,6 +261,7 @@ var postProcessCmElement = function (yasqe) {
 	yasqe.on('language-changed', function () {
 		checkSyntax(yasqe);
 		root.drawButtons(yasqe);
+		root.autoComplete(yasqe);
 	});
 
 	yasqe.on('cursorActivity', function (yasqe, eventInfo) {
