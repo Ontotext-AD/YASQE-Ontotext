@@ -1,9 +1,9 @@
-.classpath
-bower_components
-node_modules
+#Intellij Idea project files
+*.iml
+.idea
+
 .project
 .settings
-/bin
-.eslintrc
-.idea/
-
+node_modules
+test
+dist
